@@ -1,0 +1,576 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Bass Guide">
+<meta name="theme-color" content="#07111c">
+<link rel="manifest" href="./manifest.json">
+<title>McGee Creek · Bass Guide</title>
+<style>
+  *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+  html,body{height:100%;overscroll-behavior:none}
+  body{
+    min-height:100vh;
+    background:#07111c;
+    font-family:'Palatino Linotype','Book Antiqua',Palatino,Georgia,serif;
+    color:#d4eaf5;
+    display:flex;
+    justify-content:center;
+    overflow-x:hidden;
+  }
+  body::before{
+    content:'';position:fixed;inset:0;pointer-events:none;z-index:0;
+    background:
+      radial-gradient(ellipse 80% 50% at 15% 85%,rgba(0,90,160,.10) 0%,transparent 60%),
+      radial-gradient(ellipse 60% 40% at 85% 15%,rgba(0,60,120,.07) 0%,transparent 55%);
+  }
+  #app{
+    position:relative;z-index:1;
+    width:100%;max-width:460px;
+    padding:20px 18px 60px;
+    transition:opacity .18s ease,transform .18s ease;
+  }
+  #app.fade-out{opacity:0;transform:translateY(8px)}
+
+  .hdr{text-align:center;padding:10px 0 18px}
+  .hdr-icon{font-size:28px;margin-bottom:5px}
+  .hdr-title{color:#c8a96e;font-size:18px;letter-spacing:.14em;text-transform:uppercase}
+  .hdr-sub{color:#4a7fa0;font-size:10px;letter-spacing:.22em;text-transform:uppercase;margin-top:3px}
+  .weather-pill{
+    display:inline-flex;align-items:center;gap:6px;
+    margin-top:10px;padding:4px 12px;
+    background:rgba(0,100,160,.15);
+    border:1px solid rgba(74,127,160,.25);
+    border-radius:20px;font-size:10px;color:#7ab0cc;
+  }
+  .weather-pill.offline{background:rgba(0,60,40,.25);border-color:rgba(60,140,80,.25);color:#5a9a6a}
+  .weather-pill.loading{color:rgba(100,150,180,.5)}
+  .live-dot{width:6px;height:6px;border-radius:50%;background:#5a9a6a;animation:pulse 1.8s ease-in-out infinite}
+  @keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
+
+  .prog{margin-bottom:24px}
+  .prog-track{height:2px;background:rgba(255,255,255,.07);border-radius:2px;overflow:hidden}
+  .prog-fill{height:100%;background:linear-gradient(90deg,#2a6ea6,#c8a96e);border-radius:2px;transition:width .4s ease}
+  .prog-lbl{display:flex;justify-content:space-between;margin-top:5px;color:rgba(100,150,180,.45);font-size:9px;letter-spacing:.12em;text-transform:uppercase}
+
+  .step-title{color:#c0d8e8;font-size:15px;text-align:center;margin-bottom:18px;letter-spacing:.04em;font-style:italic}
+  .options{display:flex;flex-direction:column;gap:9px}
+  .opt{
+    background:rgba(255,255,255,.035);border:1px solid rgba(74,127,160,.15);
+    border-radius:10px;padding:13px 16px;cursor:pointer;text-align:left;
+    display:flex;justify-content:space-between;align-items:center;
+    transition:background .15s,border-color .15s;width:100%;
+  }
+  .opt:active,.opt:hover{background:rgba(42,110,166,.18);border-color:rgba(74,127,160,.45)}
+  .opt-lbl{color:#d8eaf5;font-size:14px}
+  .opt-sub{color:rgba(120,160,190,.65);font-size:11px;margin-top:2px}
+  .detected-badge{font-size:9px;color:#5a9a6a;letter-spacing:.1em;border:1px solid rgba(90,160,100,.35);border-radius:4px;padding:2px 6px;flex-shrink:0}
+  .back-btn{display:block;margin:16px auto 0;background:none;border:none;color:rgba(100,140,170,.45);font-size:11px;cursor:pointer;letter-spacing:.1em;font-family:inherit}
+
+  .summary{background:rgba(0,0,0,.35);border:1px solid rgba(74,127,160,.2);border-radius:12px;padding:13px 15px;margin-bottom:20px}
+  .sum-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:9px}
+  .sum-lbl{color:#4a7fa0;font-size:9px;letter-spacing:.16em;text-transform:uppercase}
+  .temp-pill{background:rgba(0,80,140,.3);border:1px solid rgba(74,127,160,.3);border-radius:20px;padding:3px 10px;display:flex;align-items:center;gap:5px;font-size:11px;color:#7ab0cc}
+  .temp-pill b{color:#87ceeb;font-size:12px}
+  .tags{display:flex;flex-wrap:wrap;gap:5px}
+  .tag{background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.07);border-radius:5px;padding:3px 8px;color:#96b8cc;font-size:11px}
+  .rank-hdr{color:#c8a96e;font-size:11px;letter-spacing:.18em;text-transform:uppercase;text-align:center;margin-bottom:13px}
+
+  .card{background:rgba(255,255,255,.03);border:1px solid rgba(74,127,160,.12);border-radius:12px;margin-bottom:10px;overflow:hidden;cursor:pointer;transition:background .2s,border-color .2s}
+  .card.open{background:rgba(20,35,50,.75)}
+  .card-top{padding:14px 15px;display:flex;align-items:center;gap:12px}
+  .swatch{width:36px;height:36px;border-radius:9px;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:17px}
+  .card-info{flex:1;min-width:0}
+  .card-name-row{display:flex;align-items:center;gap:7px;flex-wrap:wrap}
+  .rank-badge{font-size:10px;font-weight:bold;letter-spacing:.08em;border-radius:4px;padding:1px 6px}
+  .card-name{color:#daeaf5;font-size:14px;font-style:italic}
+  .card-meta{color:rgba(120,160,190,.6);font-size:10px;margin-top:3px}
+  .chev{color:rgba(100,140,170,.4);font-size:14px;transition:transform .25s ease;flex-shrink:0}
+  .chev.open{transform:rotate(180deg)}
+  .card-detail{padding:0 15px 15px;border-top:1px solid rgba(255,255,255,.05)}
+  .detail-inner{padding-top:12px;display:flex;flex-direction:column;gap:9px}
+  .dblock{background:rgba(0,0,0,.3);border-radius:8px;padding:10px 12px}
+  .dblock.lt{background:rgba(0,0,0,.18)}
+  .dhead{color:#4a7fa0;font-size:9px;letter-spacing:.15em;text-transform:uppercase;margin-bottom:5px}
+  .dtext{color:#c8dfe8;font-size:13px;line-height:1.62}
+  .drow{display:flex;gap:8px;align-items:center}
+  .drow-lbl{font-size:10px;color:rgba(100,140,160,.6)}
+  .drow-val{font-size:12px;color:#96b8cc}
+
+  .show-more-btn{
+    display:block;width:100%;margin-top:4px;margin-bottom:10px;
+    background:rgba(255,255,255,.025);border:1px dashed rgba(74,127,160,.2);
+    border-radius:10px;padding:11px;
+    color:rgba(100,150,180,.55);font-size:11px;letter-spacing:.12em;text-transform:uppercase;
+    cursor:pointer;transition:background .15s;font-family:inherit;
+  }
+  .show-more-btn:active,.show-more-btn:hover{background:rgba(42,110,166,.1);color:rgba(140,180,210,.8)}
+
+  .reset{
+    display:block;width:100%;margin-top:16px;
+    background:rgba(42,110,166,.08);border:1px solid rgba(42,110,166,.25);
+    border-radius:10px;padding:13px;
+    color:#6aadd0;font-size:12px;letter-spacing:.14em;text-transform:uppercase;
+    cursor:pointer;transition:background .15s;font-family:inherit;
+  }
+  .reset:active,.reset:hover{background:rgba(42,110,166,.2)}
+
+  .footer{text-align:center;margin-top:28px;color:rgba(74,127,160,.28);font-size:9px;letter-spacing:.12em;text-transform:uppercase}
+</style>
+</head>
+<body>
+<div id="app">
+  <div class="hdr">
+    <div class="hdr-icon">🎣</div>
+    <div class="hdr-title">McGee Creek</div>
+    <div class="hdr-sub">March Bass Field Guide</div>
+    <div id="weather-pill" class="weather-pill loading">
+      <span class="live-dot"></span>
+      <span id="weather-text">Fetching live weather…</span>
+    </div>
+  </div>
+  <div id="main"></div>
+  <div class="footer">McGee Creek · March 12–16 · Pre-spawn Largemouth</div>
+</div>
+
+<script>
+// ── BAIT DATABASE (16 baits) ──────────────────────────────────────────────────
+const BAITS=[
+
+  // ── JIGS ──
+  {id:1,name:"Black & Blue Flipping Jig",weight:"3/4 oz",
+   color:"Black / Blue — stained water, cold front, low light",swatch:["#111122","#3355cc"],type:"Flipping Jig",icon:"🎣",
+   score(c){let s=10;if(c.waterClarity==="stained")s+=3;if(c.recentWeather==="cold_front")s+=3;
+     if(["dawn","morning"].includes(c.timeOfDay))s+=2;if(c.waterTemp<56)s+=2;if(c.sky==="sunny")s+=1;return s},
+   vTemp:[48,68],vWind:["calm","light","windy"],vTime:["dawn","morning","midday","afternoon","evening"],
+   vSky:["sunny","cloudy","overcast"],vWeather:["warm_stretch","recent_rain","cold_front","stable"],vClarity:["clear","stained"],
+   where:"Upper creek arms — pitch tight to every stump & laydown, 3–10 ft",
+   how:"Flip or pitch to the base of each stump. Let it freefall on semi-slack line and watch for a line twitch. Give it 2–3 slow hops on the bottom then move on. Short deliberate hops with long pauses — never drag it. Black/blue dominates stained water and post-cold-front days."},
+
+  {id:2,name:"Green Pumpkin Flipping Jig",weight:"1/2–3/4 oz",
+   color:"Green Pumpkin — clear water, sunny, warm stretch",swatch:["#3a4e1e","#7db535"],type:"Flipping Jig",icon:"🎣",
+   score(c){let s=9;if(c.waterClarity==="clear")s+=3;if(c.waterTemp>=54&&c.waterTemp<=63)s+=2;
+     if(c.recentWeather==="warm_stretch")s+=2;if(["midday","afternoon"].includes(c.timeOfDay))s+=1;return s},
+   vTemp:[50,70],vWind:["calm","light","windy"],vTime:["dawn","morning","midday","afternoon","evening"],
+   vSky:["sunny","cloudy","overcast"],vWeather:["warm_stretch","recent_rain","cold_front","stable"],vClarity:["clear","stained"],
+   where:"Stump flats upper creek arms, clear water areas, 4–12 ft",
+   how:"Pitch to stump bases and wood. Let it freefall — keep line semi-slack so you feel the hit on drop. 2–3 slow hops then recast. Green pumpkin is the clear-water jig color — when fish get a good look at it, natural wins."},
+
+  {id:3,name:"Football Jig",weight:"3/4–1 oz",
+   color:"Green Pumpkin / Brown — natural bottom colors",swatch:["#4a5e22","#8a7a40"],type:"Football Jig",icon:"🎣",
+   score(c){let s=6;if(c.waterTemp<54)s+=3;if(c.recentWeather==="cold_front")s+=2;
+     if(["midday","afternoon"].includes(c.timeOfDay))s+=2;if(c.waterClarity==="clear")s+=1;return s},
+   vTemp:[46,62],vWind:["calm","light"],vTime:["midday","afternoon","evening"],
+   vSky:["sunny","cloudy","overcast"],vWeather:["warm_stretch","recent_rain","cold_front","stable"],vClarity:["clear","stained"],
+   where:"Deep main lake points and ledges, 15–30 ft — where fish stage before moving shallow",
+   how:"Cast to deep structure and drag slowly along the bottom. The football head rocks and hops naturally on hard bottom. Pause frequently. Feel for the tick on bottom change — that's where fish sit. Green pumpkin or brown matches the bottom."},
+
+  {id:4,name:"Swim Jig",weight:"3/8 oz",
+   color:"White / Chartreuse-White — matches shad",swatch:["#e8e8e8","#c8e840"],type:"Swim Jig",icon:"🎣",
+   score(c){let s=7;if(c.waterTemp>=56&&c.waterTemp<=65)s+=2;if(c.recentWeather==="warm_stretch")s+=2;
+     if(["morning","midday","afternoon"].includes(c.timeOfDay))s+=1;if(c.sky==="overcast")s+=1;
+     if(c.waterClarity==="stained")s+=1;return s},
+   vTemp:[52,70],vWind:["calm","light"],vTime:["dawn","morning","midday","afternoon","evening"],
+   vSky:["sunny","cloudy","overcast"],vWeather:["warm_stretch","recent_rain","stable"],vClarity:["clear","stained"],
+   where:"Parallel to banks through stump fields, over submerged grass, 3–8 ft",
+   how:"Steady medium retrieve keeping it 2–4 ft under the surface. Occasionally let it flutter down near structure. White matches shad; chartreuse-white in stained water. Think of it as a jig that swims — not fast, not slow."},
+
+  // ── SOFT PLASTICS ──
+  {id:5,name:"Texas Rig — Creature Bait",weight:"3/4 oz tungsten • Brush Hog / Beaver",
+   color:"Green Pumpkin (clear) / Black Blue (stained)",swatch:["#3a4e1e","#7db535"],type:"Soft Plastic",icon:"🪱",
+   score(c){let s=9;if(c.waterClarity==="clear")s+=2;if(c.waterTemp>=54&&c.waterTemp<=63)s+=2;
+     if(c.recentWeather==="warm_stretch")s+=2;if(["morning","midday","afternoon"].includes(c.timeOfDay))s+=1;return s},
+   vTemp:[50,70],vWind:["calm","light","windy"],vTime:["dawn","morning","midday","afternoon","evening"],
+   vSky:["sunny","cloudy","overcast"],vWeather:["warm_stretch","recent_rain","cold_front","stable"],vClarity:["clear","stained"],
+   where:"Dense stump cover, laydowns, any hard wood structure, 3–12 ft",
+   how:"Pitch to cover and let it sink on semi-slack line — watch for the line to jump or go slack unexpectedly. Once on bottom, slow drag with occasional hops. Black/blue in stained water, green pumpkin in clear. Crawfish-imitating action is deadly in spring."},
+
+  {id:6,name:"Wacky Senko",weight:"5\" weightless or 1/16 oz nail weight",
+   color:"Green Pumpkin / Watermelon Red Flake — natural colors",swatch:["#2e4a1a","#c84848"],type:"Soft Plastic",icon:"🪱",
+   score(c){let s=8;if(c.waterClarity==="clear")s+=3;if(c.sky==="sunny")s+=2;
+     if(["midday","afternoon"].includes(c.timeOfDay))s+=2;if(c.wind==="calm")s+=2;
+     if(c.recentWeather==="cold_front")s+=1;return s},
+   vTemp:[50,72],vWind:["calm","light"],vTime:["dawn","morning","midday","afternoon","evening"],
+   vSky:["sunny","cloudy","overcast"],vWeather:["warm_stretch","recent_rain","cold_front","stable"],vClarity:["clear","stained"],
+   where:"Near stumps and banks, clear water coves, 2–8 ft — best when you can see 2+ ft down",
+   how:"Cast near structure and do absolutely nothing. Watch the line. The Senko shimmies on the fall all by itself. Only twitch if nothing happens after a full sink. Green pumpkin in clear water, watermelon red in slightly stained. Patience — this is a sight bait."},
+
+  {id:7,name:"Texas Rig — Stick Bait",weight:"1/4–3/8 oz tungsten • 5\" stick bait",
+   color:"Green Pumpkin / Oxblood / Watermelon Seed",swatch:["#3a5020","#6a2030"],type:"Soft Plastic",icon:"🪱",
+   score(c){let s=7;if(c.waterClarity==="clear")s+=2;if(c.waterTemp>=54&&c.waterTemp<=65)s+=2;
+     if(c.wind==="calm")s+=1;if(["morning","midday","afternoon"].includes(c.timeOfDay))s+=1;return s},
+   vTemp:[50,72],vWind:["calm","light","windy"],vTime:["dawn","morning","midday","afternoon","evening"],
+   vSky:["sunny","cloudy","overcast"],vWeather:["warm_stretch","recent_rain","cold_front","stable"],vClarity:["clear","stained"],
+   where:"Stump flats, points, laydowns — slender profile for pressured fish",
+   how:"Slow drag across bottom with occasional hops and 3–5 second pauses. Slender profile is more subtle than a creature bait — use it when fish are pressured or in clearer water where they get a good look. Oxblood in dark water, green pumpkin in clear."},
+
+  {id:8,name:"Ned Rig",weight:"1/6–1/4 oz mushroom head • 3\" finesse worm",
+   color:"Green Pumpkin / Oxblood / Natural Brown",swatch:["#4a6030","#8a5040"],type:"Finesse",icon:"🪱",
+   score(c){let s=7;if(c.recentWeather==="cold_front")s+=4;if(c.waterTemp<54)s+=3;
+     if(c.waterClarity==="clear")s+=2;if(c.sky==="sunny")s+=1;if(c.wind==="calm")s+=1;return s},
+   vTemp:[44,70],vWind:["calm","light"],vTime:["dawn","morning","midday","afternoon","evening"],
+   vSky:["sunny","cloudy","overcast"],vWeather:["warm_stretch","recent_rain","cold_front","stable"],vClarity:["clear","stained"],
+   where:"Hard bottom transitions, points, main lake structure — any depth where fish are lockjawed",
+   how:"Ultra-slow drag — almost no movement. The mushroom head lets it stand up on bottom looking alive. Inch forward, pause 5–10 seconds. Cold front ace — use this when nothing else works. Green pumpkin all-around, oxblood in dark water."},
+
+  {id:9,name:"Fluke / Soft Jerkbait",weight:"Weightless or 1/8 oz weighted hook • 5\"",
+   color:"White Pearl / Shad / Chartreuse White",swatch:["#e0e8f0","#a0b8d0"],type:"Soft Plastic",icon:"🪱",
+   score(c){let s=6;if(c.waterTemp>=56&&c.waterTemp<=66)s+=2;if(c.recentWeather==="warm_stretch")s+=2;
+     if(["morning","midday","afternoon"].includes(c.timeOfDay))s+=2;if(c.waterClarity==="clear")s+=2;
+     if(c.sky!=="overcast")s+=1;return s},
+   vTemp:[52,72],vWind:["calm","light"],vTime:["dawn","morning","midday","afternoon","evening"],
+   vSky:["sunny","cloudy","overcast"],vWeather:["warm_stretch","recent_rain","stable"],vClarity:["clear","stained"],
+   where:"Open water near baitfish, around points, shallow coves — best weightless 0–3 ft",
+   how:"Jerk-jerk-pause on slack line — the bait darts and glides like a dying shad. Keep pauses long (3–5 sec). White/pearl in clear water; chartreuse-white in stained. Can also slow-roll just under the surface."},
+
+  {id:10,name:"Swimbait — Paddle Tail",weight:"3/8–1/2 oz weighted hook • 4–5\"",
+   color:"White Pearl / Sexy Shad (open water) · Bluegill (near wood)",swatch:["#d8e8f0","#6090b0"],type:"Swimbait",icon:"🐟",
+   score(c){let s=8;if(c.waterTemp>=55&&c.waterTemp<=66)s+=2;if(c.recentWeather==="warm_stretch")s+=2;
+     if(["morning","midday","afternoon"].includes(c.timeOfDay))s+=1;if(c.sky==="overcast")s+=1;
+     if(c.waterClarity==="stained")s+=1;return s},
+   vTemp:[50,72],vWind:["calm","light","windy"],vTime:["dawn","morning","midday","afternoon","evening"],
+   vSky:["sunny","cloudy","overcast"],vWeather:["warm_stretch","recent_rain","stable"],vClarity:["clear","stained"],
+   where:"Stump fields, open water near baitfish, parallel to banks, 3–12 ft",
+   how:"Steady medium retrieve — let the paddle tail do the work. White/pearl or sexy shad in open water to match shad. Switch to a bluegill pattern in the afternoon near shallow stumps when bluegill are active. Occasionally let it fall near structure."},
+
+  {id:11,name:"Glide Bait",weight:"6–8\" • 2–3 oz",
+   color:"Natural Shad / Bluegill / Perch — realistic natural patterns",swatch:["#a8c0c8","#608890"],type:"Swimbait",icon:"🐟",
+   score(c){let s=4;if(c.waterTemp>=58&&c.waterTemp<=68)s+=3;if(c.recentWeather==="warm_stretch")s+=3;
+     if(["morning","afternoon"].includes(c.timeOfDay))s+=2;if(c.waterClarity==="clear")s+=3;
+     if(c.wind==="calm")s+=1;return s},
+   vTemp:[56,72],vWind:["calm","light"],vTime:["dawn","morning","midday","afternoon"],
+   vSky:["sunny","cloudy","overcast"],vWeather:["warm_stretch","stable"],vClarity:["clear","stained"],
+   where:"Main lake points, transitions, open water — targeting 4–6 lb+ fish specifically",
+   how:"Slow S-curve glide: pull-pause-pull. Each sweep makes it dart then glide back the other way. Super slow — 5+ second pauses. Trophy bait only. Natural shad or bluegill colors in clear water. Don't use in stained water or post-front. Patience required."},
+
+  // ── CRANKBAITS ──
+  {id:12,name:"Squarebill Crankbait",weight:"Strike King 1.5–2.5",
+   color:"Crawfish (morning/evening) / Chartreuse Shad (stained water)",swatch:["#b85020","#e8a840"],type:"Crankbait",icon:"🎯",
+   score(c){let s=8;if(c.waterTemp>=54&&c.waterTemp<=64)s+=2;if(c.waterClarity==="stained")s+=2;
+     if(c.recentWeather==="warm_stretch")s+=1;if(["morning","midday","afternoon"].includes(c.timeOfDay))s+=1;
+     if(c.sky!=="sunny")s+=1;return s},
+   vTemp:[50,70],vWind:["calm","light","windy"],vTime:["dawn","morning","midday","afternoon","evening"],
+   vSky:["sunny","cloudy","overcast"],vWeather:["warm_stretch","recent_rain","stable"],vClarity:["clear","stained"],
+   where:"Stump fields, shallow wood, laydowns, 1–5 ft — make it deflect off every object",
+   how:"Medium-fast retrieve — when it bangs a stump and deflects, pause 1 second. That deflection-pause is the strike trigger. Crawfish colors dawn/evening or clear water; chartreuse shad in stained water or midday."},
+
+  {id:13,name:"Lipless Crankbait",weight:"1/2 oz",
+   color:"Red Craw (spring crawfish match) / Chrome Shad / Gold",swatch:["#c83030","#c8c8c8"],type:"Crankbait",icon:"🎯",
+   score(c){let s=8;if(c.waterTemp>=52&&c.waterTemp<=62)s+=3;if(c.recentWeather==="warm_stretch")s+=1;
+     if(["morning","midday","afternoon"].includes(c.timeOfDay))s+=1;if(c.sky==="overcast")s+=1;
+     if(c.wind!=="calm")s+=1;return s},
+   vTemp:[48,68],vWind:["calm","light","windy"],vTime:["dawn","morning","midday","afternoon","evening"],
+   vSky:["sunny","cloudy","overcast"],vWeather:["warm_stretch","recent_rain","cold_front","stable"],vClarity:["clear","stained"],
+   where:"Stump flats, open water near creek channels, 4–12 ft — rip it up off the bottom",
+   how:"Cast, count down, then rip upward and let it freefall. Most strikes come on the fall. Rip-fall-rip-fall rhythm. Red craw in spring to match crawfish. Chrome/gold in open water. Great in wind and overcast."},
+
+  // ── SUSPENDING JERKBAIT ──
+  {id:14,name:"Suspending Jerkbait",weight:"4–5\"",
+   color:"Ghost Minnow / Blue Chrome (clear) · Chartreuse Shad (stained)",swatch:["#c8d8e0","#4878a8"],type:"Jerkbait",icon:"🐟",
+   score(c){let s=8;if(c.waterTemp<56)s+=4;if(c.recentWeather==="cold_front")s+=3;
+     if(c.waterClarity==="clear")s+=2;if(c.sky==="sunny")s+=1;if(c.wind==="calm")s+=1;return s},
+   vTemp:[44,62],vWind:["calm","light"],vTime:["dawn","morning","midday","afternoon","evening"],
+   vSky:["sunny","cloudy","overcast"],vWeather:["warm_stretch","recent_rain","cold_front","stable"],vClarity:["clear","stained"],
+   where:"Open water points, main lake transition areas, 4–10 ft — cold water weapon",
+   how:"Twitch-twitch, pause 3–5 seconds. The bait suspends like a dying shad. Colder water = longer pauses — after a cold front, pause up to 10 seconds. Ghost/blue chrome in clear water; chartreuse shad if water is stained."},
+
+  // ── TOPWATER ──
+  {id:15,name:"Popping Frog",weight:"1/2 oz",
+   color:"White / Black / Natural Green — match your light conditions",swatch:["#1a3010","#50801a"],type:"Topwater",icon:"🐸",
+   score(c){let s=3;if(c.waterTemp>=60)s+=3;if(c.wind==="calm")s+=3;
+     if(["afternoon","evening"].includes(c.timeOfDay))s+=3;if(c.sky==="overcast")s+=1;
+     if(c.recentWeather==="warm_stretch")s+=2;return s},
+   vTemp:[58,80],vWind:["calm"],vTime:["afternoon","evening"],
+   vSky:["sunny","cloudy","overcast"],vWeather:["warm_stretch","stable"],vClarity:["clear","stained"],
+   where:"Shallow stump fields, matted cover — 60°F+ water, calm wind, warm afternoons only",
+   how:"Pop-pop-pause. The popping action spits water like distressed bait. Pause 3–5 seconds between pops. Wait until you FEEL the fish before setting the hook — don't react to the blow-up. White in low light; black in bright sun; natural green near vegetation."},
+
+  // ── REACTION BAITS ──
+  {id:16,name:"Spinnerbait",weight:"3/8–1/2 oz",
+   color:"Chartreuse-White (stained) / White (clear) / Sexy Shad (clear/sunny)",swatch:["#c8e840","#e8e8e8"],type:"Spinnerbait",icon:"⚡",
+   score(c){let s=8;if(c.waterTemp>=52&&c.waterTemp<=65)s+=2;if(c.waterClarity==="stained")s+=3;
+     if(c.sky==="overcast")s+=2;if(c.wind!=="calm")s+=2;if(["morning","midday","afternoon"].includes(c.timeOfDay))s+=1;return s},
+   vTemp:[48,70],vWind:["calm","light","windy"],vTime:["dawn","morning","midday","afternoon","evening"],
+   vSky:["sunny","cloudy","overcast"],vWeather:["warm_stretch","recent_rain","cold_front","stable"],vClarity:["clear","stained"],
+   where:"Parallel to stump-lined banks, slow-rolling through 3–8 ft",
+   how:"Slow-roll just above the stumps — barely fast enough to keep the blades spinning. Deflect off wood when possible. Chartreuse-white in stained or dirty water; white in clearer conditions; sexy shad on clear sunny days. Excels in wind and overcast."},
+
+  {id:17,name:"ChatterBait / Bladed Jig",weight:"3/8 oz",
+   color:"White-Chartreuse (stained) / Green Pumpkin (clear) / White (shad match)",swatch:["#c8e840","#3a5020"],type:"Bladed Jig",icon:"⚡",
+   score(c){let s=7;if(c.waterClarity==="stained")s+=4;if(c.waterTemp>=54&&c.waterTemp<=66)s+=2;
+     if(c.sky==="overcast")s+=2;if(c.wind!=="calm")s+=1;if(c.recentWeather==="recent_rain")s+=2;return s},
+   vTemp:[50,70],vWind:["calm","light","windy"],vTime:["dawn","morning","midday","afternoon","evening"],
+   vSky:["sunny","cloudy","overcast"],vWeather:["warm_stretch","recent_rain","cold_front","stable"],vClarity:["clear","stained"],
+   where:"Stump flats, any water — shines hardest when water is stained after rain",
+   how:"Steady retrieve 3–6 ft deep — the vibrating blade does the triggering. White-chartreuse in stained/post-rain; green pumpkin in clearer water near wood; white for shad match in open water. Add a paddle tail trailer for more action on the pause."},
+];
+
+// ── SCORING CONSTANTS ─────────────────────────────────────────────────────────
+const RANK_COLORS=["#c8a96e","#8090a8","#8a6040"];
+const RANK_BORDERS=["rgba(200,169,110,.45)","rgba(128,144,168,.35)","rgba(138,96,64,.35)"];
+const RANK_LABELS=["#1 PICK","#2 PICK","#3 PICK"];
+
+// ── STEPS / OPTIONS ───────────────────────────────────────────────────────────
+const STEPS=["timeOfDay","sky","wind","recentWeather","waterClarity"];
+const STEP_TITLES={
+  timeOfDay:"What time of day is it?",
+  sky:"How's the sky looking?",
+  wind:"How's the wind?",
+  recentWeather:"What's the recent weather been like?",
+  waterClarity:"Water clarity?",
+};
+const OPTIONS={
+  timeOfDay:[
+    {value:"dawn",label:"🌅 Dawn",sub:"First light — 30 min before & after sunrise"},
+    {value:"morning",label:"☀️ Morning",sub:"8 am – noon"},
+    {value:"midday",label:"🌞 Midday",sub:"Noon – 2 pm"},
+    {value:"afternoon",label:"🌤 Afternoon",sub:"2 pm – 6 pm"},
+    {value:"evening",label:"🌇 Evening",sub:"Last hour of light"},
+  ],
+  sky:[
+    {value:"sunny",label:"☀️ Sunny / Bluebird",sub:"Full sun, high pressure"},
+    {value:"cloudy",label:"⛅ Partly Cloudy",sub:"Mixed sun and clouds"},
+    {value:"overcast",label:"☁️ Overcast",sub:"Full cloud cover"},
+  ],
+  wind:[
+    {value:"calm",label:"🪨 Calm",sub:"Flat or near-flat water"},
+    {value:"light",label:"🌿 Light Breeze",sub:"Small ripples, 5–12 mph"},
+    {value:"windy",label:"🌬 Windy",sub:"Whitecaps forming, 12+ mph"},
+  ],
+  recentWeather:[
+    {value:"warm_stretch",label:"☀️ Warm Stretch",sub:"Several warm days in a row"},
+    {value:"recent_rain",label:"🌧 Recent Rain",sub:"Rain in the last 24–48 hrs"},
+    {value:"cold_front",label:"🥶 Cold Front",sub:"Front just passed, temps dropped"},
+    {value:"stable",label:"➡️ Stable",sub:"No big changes lately"},
+  ],
+  waterClarity:[
+    {value:"clear",label:"💎 Clear",sub:"Can see 2+ feet down"},
+    {value:"stained",label:"🟤 Stained / Murky",sub:"Limited visibility under 2 ft"},
+  ],
+};
+
+// ── STATE ─────────────────────────────────────────────────────────────────────
+let step=0, conds={}, expandedId=null, showAll=false, liveWeather=null;
+
+// ── WEATHER UTILS ─────────────────────────────────────────────────────────────
+function estimateWaterTemp(airTemp,recentWeather){
+  const base=airTemp*0.55+22;
+  const adj={warm_stretch:2,recent_rain:-1,cold_front:-3,stable:0};
+  return Math.round(Math.min(Math.max(base+(adj[recentWeather]||0),44),80));
+}
+function baselineAirTemp(rw){
+  return {warm_stretch:62,recent_rain:56,cold_front:50,stable:57}[rw]||57;
+}
+function windLabel(mph){
+  if(mph<5)return "calm";
+  if(mph<13)return "light";
+  return "windy";
+}
+function skyLabel(pct){
+  if(pct<25)return "sunny";
+  if(pct<65)return "cloudy";
+  return "overcast";
+}
+
+// ── SCORING ───────────────────────────────────────────────────────────────────
+function getRecommendations(c,waterTemp){
+  const full={...c,waterTemp};
+  const eligible=BAITS.filter(b=>
+    waterTemp>=b.vTemp[0]&&waterTemp<=b.vTemp[1]&&
+    b.vTime.includes(c.timeOfDay)&&b.vSky.includes(c.sky)&&
+    b.vWind.includes(c.wind)&&b.vWeather.includes(c.recentWeather)&&
+    b.vClarity.includes(c.waterClarity)
+  );
+  const pool=eligible.length>=3?eligible:BAITS;
+  return pool.map(b=>({...b,fs:b.score(full)})).sort((a,b)=>b.fs-a.fs);
+}
+function getLabel(f,v){return OPTIONS[f]?.find(o=>o.value===v)?.label||v}
+
+// ── RENDER ────────────────────────────────────────────────────────────────────
+function transition(fn){
+  const app=document.getElementById('app');
+  app.classList.add('fade-out');
+  setTimeout(()=>{fn();render();app.classList.remove('fade-out')},180);
+}
+function render(){
+  const main=document.getElementById('main');
+  step<STEPS.length?renderStep(main):renderResults(main);
+}
+function renderStep(main){
+  const field=STEPS[step];
+  const opts=OPTIONS[field];
+  const pct=(step/STEPS.length*100).toFixed(1);
+  let html=`
+    <div class="prog">
+      <div class="prog-track"><div class="prog-fill" style="width:${pct}%"></div></div>
+      <div class="prog-lbl"><span>Conditions</span><span>${step+1} of ${STEPS.length}</span></div>
+    </div>
+    <div class="step-title">${STEP_TITLES[field]}</div>
+    <div class="options">
+  `;
+  opts.forEach(o=>{
+    const isDetected=liveWeather&&(
+      (field==="sky"&&liveWeather.skyLabel===o.value)||
+      (field==="wind"&&liveWeather.windLabel===o.value)
+    );
+    html+=`
+      <button class="opt" onclick="selectOpt('${field}','${o.value}')">
+        <div>
+          <div class="opt-lbl">${o.label}</div>
+          <div class="opt-sub">${o.sub}</div>
+        </div>
+        ${isDetected?'<span class="detected-badge">DETECTED</span>':''}
+      </button>
+    `;
+  });
+  html+=`</div>`;
+  if(step>0)html+=`<button class="back-btn" onclick="goBack()">← Back</button>`;
+  main.innerHTML=html;
+}
+
+function renderResults(main){
+  const airTemp=liveWeather?liveWeather.airTempF:baselineAirTemp(conds.recentWeather);
+  const sky=liveWeather?liveWeather.skyLabel:conds.sky;
+  const wind=liveWeather?liveWeather.windLabel:conds.wind;
+  const finalConds={...conds,sky,wind};
+  const waterTemp=estimateWaterTemp(airTemp,conds.recentWeather);
+  const allRecs=getRecommendations(finalConds,waterTemp);
+  const liveStr=liveWeather?` <span style="color:#5a9a6a;font-size:10px">● Live</span>`:'';
+  const topRecs=allRecs.slice(0,3);
+  const moreRecs=allRecs.slice(3);
+
+  let html=`
+    <div class="summary">
+      <div class="sum-top">
+        <span class="sum-lbl">Conditions Summary</span>
+        <div class="temp-pill">
+          <span>~${airTemp}°F air${liveStr}</span>
+          <span style="color:rgba(74,127,160,.4)">·</span>
+          <b>~${waterTemp}°F water</b>
+        </div>
+      </div>
+      <div class="tags">
+        ${STEPS.map(f=>`<span class="tag">${getLabel(f,conds[f])}</span>`).join('')}
+      </div>
+    </div>
+    <div class="rank-hdr">Top Recommendations</div>
+  `;
+
+  topRecs.forEach((b,i)=>{
+    html+=buildCard(b,i,RANK_COLORS[i],RANK_BORDERS[i],RANK_LABELS[i]);
+  });
+
+  if(moreRecs.length>0){
+    if(!showAll){
+      html+=`<button class="show-more-btn" onclick="toggleShowAll()">▾ Show All ${allRecs.length} Baits (${moreRecs.length} more)</button>`;
+    } else {
+      moreRecs.forEach((b,i)=>{
+        html+=buildCard(b,i+3,"rgba(160,170,180,.7)","rgba(74,127,160,.12)",`#${i+4}`);
+      });
+      html+=`<button class="show-more-btn" onclick="toggleShowAll()">▴ Show Less</button>`;
+    }
+  }
+
+  html+=`<button class="reset" onclick="resetApp()">↩ New Conditions</button>`;
+  main.innerHTML=html;
+}
+
+function buildCard(b,i,rankColor,rankBorder,rankLabel){
+  const open=expandedId===b.id;
+  return `
+    <div class="card${open?' open':''}" style="border-color:${open?rankBorder:'rgba(74,127,160,.12)'}"
+         onclick="toggleCard(${b.id})">
+      <div class="card-top">
+        <div class="swatch" style="background:linear-gradient(135deg,${b.swatch[0]},${b.swatch[1]});box-shadow:0 0 12px ${b.swatch[1]}33">
+          ${b.icon}
+        </div>
+        <div class="card-info">
+          <div class="card-name-row">
+            <span class="rank-badge" style="color:${rankColor};border:1px solid ${rankColor}55">${rankLabel}</span>
+            <span class="card-name">${b.name}</span>
+          </div>
+          <div class="card-meta">${b.type} &nbsp;·&nbsp; <span style="color:${b.swatch[1]}">${b.color}</span></div>
+        </div>
+        <div class="chev${open?' open':''}">▾</div>
+      </div>
+      ${open?`
+      <div class="card-detail">
+        <div class="detail-inner">
+          <div class="dblock"><div class="dhead">📍 Where</div><div class="dtext">${b.where}</div></div>
+          <div class="dblock"><div class="dhead">🎯 How to Fish It</div><div class="dtext">${b.how}</div></div>
+          <div class="dblock lt"><div class="drow"><span class="drow-lbl">Weight / Size:</span><span class="drow-val">${b.weight}</span></div></div>
+        </div>
+      </div>`:''}
+    </div>
+  `;
+}
+
+// ── WEATHER FETCH ─────────────────────────────────────────────────────────────
+async function fetchWeather(){
+  const pill=document.getElementById('weather-pill');
+  const txt=document.getElementById('weather-text');
+  try{
+    const res=await fetch("https://api.anthropic.com/v1/messages",{
+      method:"POST",
+      headers:{"Content-Type":"application/json"},
+      body:JSON.stringify({
+        model:"claude-sonnet-4-20250514",
+        max_tokens:300,
+        tools:[{type:"web_search_20250305",name:"web_search"}],
+        system:`You are a weather data extractor. Search for current weather then respond ONLY with raw JSON, no markdown, no backticks.
+Format: {"airTempF":<number>,"windMph":<number>,"cloudPct":<number>}
+cloudPct: 0=clear/sunny, 50=partly cloudy, 100=overcast.`,
+        messages:[{role:"user",content:"Current weather at McGee Creek Reservoir near Atoka Oklahoma (34.374,-95.887). JSON only."}]
+      })
+    });
+    if(!res.ok)throw new Error('API error');
+    const data=await res.json();
+    const block=data.content?.find(b=>b.type==="text");
+    if(!block)throw new Error('no text');
+    const parsed=JSON.parse(block.text.replace(/```json|```/g,"").trim());
+    liveWeather={
+      airTempF:Math.round(parsed.airTempF),
+      windMph:Math.round(parsed.windMph),
+      cloudPct:Math.round(parsed.cloudPct??50),
+      windLabel:windLabel(parsed.windMph),
+      skyLabel:skyLabel(parsed.cloudPct??50),
+    };
+    pill.className="weather-pill";
+    pill.innerHTML=`<span class="live-dot"></span><span>${liveWeather.airTempF}°F &nbsp;·&nbsp; ${liveWeather.windMph} mph &nbsp;·&nbsp; Live</span>`;
+    render();
+  }catch(e){
+    liveWeather=null;
+    pill.className="weather-pill offline";
+    pill.innerHTML=`<span>⚓ Offline mode — manual inputs</span>`;
+  }
+}
+
+// ── ACTIONS ───────────────────────────────────────────────────────────────────
+function selectOpt(field,value){
+  conds={...conds,[field]:value};
+  showAll=false;
+  if(step<STEPS.length-1){transition(()=>step++)}
+  else{transition(()=>step=STEPS.length)}
+}
+function goBack(){transition(()=>step--)}
+function toggleCard(id){expandedId=expandedId===id?null:id;render()}
+function toggleShowAll(){showAll=!showAll;render()}
+function resetApp(){transition(()=>{step=0;conds={};expandedId=null;showAll=false})}
+
+// ── SERVICE WORKER ────────────────────────────────────────────────────────────
+if('serviceWorker' in navigator){
+  window.addEventListener('load',()=>{
+    navigator.serviceWorker.register('./sw.js')
+      .then(()=>console.log('SW registered'))
+      .catch(e=>console.warn('SW failed:',e));
+  });
+}
+
+render();
+fetchWeather();
+</script>
+</body>
+</html>
