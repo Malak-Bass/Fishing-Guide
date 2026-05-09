@@ -1,4 +1,4 @@
-const CACHE = 'mcgee-bass-v1';
+const CACHE = 'mcgee-bass-v2';
 const ASSETS = [
   './',
   './index.html',
@@ -20,6 +20,13 @@ self.addEventListener('activate', e => {
 });
 
 self.addEventListener('fetch', e => {
+  // Dev bypass: when served from localhost, always go to network so edits show up live.
+  const url = new URL(e.request.url);
+  if (url.hostname === 'localhost' || url.hostname === '127.0.0.1') {
+    e.respondWith(fetch(e.request).catch(() => caches.match(e.request)));
+    return;
+  }
+
   // For the Anthropic weather API call — try network first, fail silently offline
   if (e.request.url.includes('anthropic.com')) {
     e.respondWith(

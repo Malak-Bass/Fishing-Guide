@@ -7,6 +7,9 @@
 <meta name="apple-mobile-web-app-title" content="Bass for Dummies">
 <meta name="theme-color" content="#07111c">
 <link rel="manifest" href="./manifest.json">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap">
 <title>Bass for Dummies</title>
 <style>
   *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
@@ -14,7 +17,7 @@
   body{
     min-height:100vh;
     background:#07111c;
-    font-family:'Palatino Linotype','Book Antiqua',Palatino,Georgia,serif;
+    font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
     color:#d4eaf5;
     display:flex;
     justify-content:center;
@@ -34,16 +37,15 @@
   }
   #app.fade-out{opacity:0;transform:translateY(8px)}
 
-  .hdr{text-align:center;padding:10px 0 18px}
+  .hdr{text-align:center;padding:50px 0 18px}
   .hdr-icon{font-size:28px;margin-bottom:5px}
-  .hdr-title{color:#c8a96e;font-size:18px;letter-spacing:.14em;text-transform:uppercase}
-  .hdr-sub{color:#4a7fa0;font-size:10px;letter-spacing:.22em;text-transform:uppercase;margin-top:3px}
+  .hdr-sub{color:#4a7fa0;font-size:18px;letter-spacing:.22em;text-transform:uppercase;margin-top:3px}
   .weather-pill{
-    display:inline-flex;align-items:center;gap:6px;
-    margin-top:10px;padding:4px 12px;
+    display:inline-flex;align-items:center;gap:8px;
+    margin-top:16px;padding:7px 18px;
     background:rgba(0,100,160,.15);
     border:1px solid rgba(74,127,160,.25);
-    border-radius:20px;font-size:10px;color:#7ab0cc;
+    border-radius:24px;font-size:13px;color:#7ab0cc;
   }
   .weather-pill.offline{background:rgba(0,60,40,.25);border-color:rgba(60,140,80,.25);color:#5a9a6a}
   .weather-pill.loading{color:rgba(100,150,180,.5)}
@@ -63,27 +65,36 @@
   .next-btn.hidden{display:none}
 
   .slider-screen{display:flex;flex-direction:column;align-items:center;gap:0}
-  .v-section{display:flex;flex-direction:row;gap:40px;justify-content:center;align-items:flex-start;margin-bottom:28px;touch-action:none}
+  .v-section{display:flex;flex-direction:row;gap:40px;justify-content:center;align-items:flex-start;margin-top:68px;margin-bottom:28px;touch-action:none}
   .v-group{display:flex;flex-direction:column;align-items:center}
   .v-inner{display:flex;flex-direction:row;gap:8px;align-items:stretch;margin-top:.5rem}
   .v-labels{display:flex;flex-direction:column;justify-content:space-between;width:110px}
   .v-label-item{display:flex;flex-direction:column;align-items:flex-start;justify-content:center}
-  .v-label-item .lbl{font-size:11px;color:rgba(180,210,230,.7);white-space:nowrap;line-height:1.2}
-  .v-label-item .sub{font-size:9px;color:rgba(120,160,190,.45);white-space:nowrap}
+  .v-label-item .lbl{font-size:13px;color:rgba(180,210,230,.7);white-space:nowrap;line-height:1.2}
+  .v-label-item .sub{font-size:11px;color:rgba(120,160,190,.45);white-space:nowrap}
   .v-track-wrap{display:flex;justify-content:center;align-items:stretch;width:20px}
   .v-track{position:relative;width:4px;margin:0 auto;background:rgba(255,255,255,.07);border-radius:2px;cursor:pointer;user-select:none}
-  .v-fill{position:absolute;top:0;left:0;width:100%;background:linear-gradient(180deg,#2a6ea6,#c8a96e);border-radius:2px;pointer-events:none}
+  .v-fill{position:absolute;top:0;left:0;width:100%;background:linear-gradient(180deg,#2a6ea6 0%,#c8a96e 50%,#2a6ea6 100%);background-size:100% var(--track-h,100%);background-repeat:no-repeat;background-position:top left;border-radius:2px;pointer-events:none}
   .v-thumb{position:absolute;left:50%;transform:translateX(-50%);width:20px;height:20px;border-radius:50%;background:#07111c;border:2px solid #c8a96e;cursor:grab;touch-action:none;z-index:2}
   .v-thumb:active{cursor:grabbing}
-  .v-readout{margin-top:10px;text-align:center;color:#c8a96e;font-size:13px;font-style:italic;min-height:18px;width:120px}
-  .v-readout-sub{text-align:center;color:rgba(120,160,190,.55);font-size:10px;min-height:14px;width:120px}
+  .v-readout{margin-top:10px;text-align:center;color:#c8a96e;font-size:15px;min-height:18px;width:120px}
+  .v-readout-sub{text-align:center;color:rgba(120,160,190,.55);font-size:12px;min-height:14px;width:120px}
+
+  .h-section{margin-top:12px;width:100%;max-width:340px;margin-left:auto;margin-right:auto;touch-action:none}
+  .h-track-wrap{position:relative;width:100%;padding:10px 0}
+  .h-track{position:relative;width:100%;height:4px;background:rgba(255,255,255,.07);border-radius:2px;cursor:pointer;user-select:none}
+  .h-fill{position:absolute;top:0;left:0;height:100%;background:linear-gradient(90deg,#2a6ea6 0%,#2a6ea6 35.7%,#c8a96e 100%);background-size:var(--track-w,100%) 100%;background-repeat:no-repeat;background-position:left top;border-radius:2px;pointer-events:none}
+  .h-thumb{position:absolute;top:50%;transform:translate(-50%,-50%);width:20px;height:20px;border-radius:50%;background:#07111c;border:2px solid #c8a96e;cursor:grab;touch-action:none;z-index:2}
+  .h-thumb:active{cursor:grabbing}
+  .h-bounds{display:flex;justify-content:space-between;margin-top:14px;font-size:11px;color:rgba(120,160,190,.55)}
+  .h-readout{margin-bottom:14px;text-align:center;color:#c8a96e;font-size:15px;min-height:18px}
 
   .prog{margin-bottom:24px}
   .prog-track{height:2px;background:rgba(255,255,255,.07);border-radius:2px;overflow:hidden}
   .prog-fill{height:100%;background:linear-gradient(90deg,#2a6ea6,#c8a96e);border-radius:2px;transition:width .4s ease}
   .prog-lbl{display:flex;justify-content:space-between;margin-top:5px;color:rgba(100,150,180,.45);font-size:9px;letter-spacing:.12em;text-transform:uppercase}
 
-  .step-title{color:#c0d8e8;font-size:15px;text-align:center;margin-bottom:18px;letter-spacing:.04em;font-style:italic}
+  .step-title{color:#c0d8e8;font-size:15px;text-align:center;margin-bottom:18px;letter-spacing:.04em}
   .options{display:flex;flex-direction:column;gap:9px}
   .opt{
     background:rgba(255,255,255,.035);border:1px solid rgba(74,127,160,.15);
@@ -113,7 +124,7 @@
   .card-info{flex:1;min-width:0}
   .card-name-row{display:flex;align-items:center;gap:7px;flex-wrap:wrap}
   .rank-badge{font-size:10px;font-weight:bold;letter-spacing:.08em;border-radius:4px;padding:1px 6px}
-  .card-name{color:#daeaf5;font-size:14px;font-style:italic}
+  .card-name{color:#daeaf5;font-size:14px}
   .card-meta{color:rgba(120,160,190,.6);font-size:10px;margin-top:3px}
   .chev{color:rgba(100,140,170,.4);font-size:14px;transition:transform .25s ease;flex-shrink:0}
   .chev.open{transform:rotate(180deg)}
@@ -129,7 +140,6 @@
 
   .reset{display:block;width:100%;margin-top:16px;background:rgba(42,110,166,.08);border:1px solid rgba(42,110,166,.25);border-radius:10px;padding:13px;color:#6aadd0;font-size:12px;letter-spacing:.14em;text-transform:uppercase;cursor:pointer;transition:background .15s;font-family:inherit}
   .reset:active,.reset:hover{background:rgba(42,110,166,.2)}
-  .footer{text-align:center;margin-top:28px;color:rgba(74,127,160,.28);font-size:9px;letter-spacing:.12em;text-transform:uppercase}
 </style>
 </head>
 <body>
@@ -139,12 +149,10 @@
 <div id="app">
   <div class="hdr">
     <div class="hdr-icon">🎣</div>
-    <div class="hdr-title">Bass for Dummies</div>
     <div class="hdr-sub">Largemouth Field Guide</div>
     <div id="weather-pill" class="weather-pill offline"><span>⚓ Offline mode — manual inputs</span></div>
   </div>
   <div id="main"></div>
-  <div class="footer">Largemouth Bass · All Waters</div>
 </div>
 
 <script>
@@ -276,6 +284,7 @@ let step=0, conds={}, expandedId=null;
 let liveWeather=null;
 let selectedMonth=new Date().getMonth();
 let selectedTimeIdx=0;
+let selectedWaterTemp=60;
 const ROW_H=36;
 
 function windLabel(mph){return mph<5?"calm":mph<15?"light":"windy"}
@@ -362,6 +371,61 @@ function transition(fn){
   setTimeout(()=>{fn();render();app.classList.remove('fade-out')},180);
 }
 
+function gradientColorAt(t){
+  const blue=[42,110,166], gold=[200,169,110];
+  const mix=(a,b,k)=>a.map((v,i)=>Math.round(v+(b[i]-v)*k));
+  const rgb=t<=0.5?mix(blue,gold,t/0.5):mix(gold,blue,(t-0.5)/0.5);
+  return`rgb(${rgb[0]},${rgb[1]},${rgb[2]})`;
+}
+
+function tempColorAt(t){
+  const blue=[42,110,166], gold=[200,169,110];
+  const start=0.357;
+  if(t<=start)return`rgb(${blue[0]},${blue[1]},${blue[2]})`;
+  const k=(t-start)/(1-start);
+  const m=blue.map((v,i)=>Math.round(v+(gold[i]-v)*k));
+  return`rgb(${m[0]},${m[1]},${m[2]})`;
+}
+
+function makeHSlider(trackId,thumbId,fillId,outId,min,max,initVal,unit){
+  const track=document.getElementById(trackId);
+  const thumb=document.getElementById(thumbId);
+  const fill=document.getElementById(fillId);
+  const out=document.getElementById(outId);
+  const range=max-min;
+
+  function setVal(v,save){
+    const val=Math.max(min,Math.min(max,Math.round(v)));
+    const t=(val-min)/range;
+    const trackW=track.clientWidth;
+    track.style.setProperty('--track-w',trackW+'px');
+    const px=t*trackW;
+    thumb.style.left=px+'px';
+    fill.style.width=px+'px';
+    thumb.style.borderColor=tempColorAt(t);
+    out.textContent=val+unit;
+    if(save)selectedWaterTemp=val;
+  }
+
+  function posToVal(clientX){
+    const rect=track.getBoundingClientRect();
+    const relX=clientX-rect.left;
+    return min+(Math.max(0,Math.min(rect.width,relX))/rect.width)*range;
+  }
+
+  let dragging=false;
+  thumb.addEventListener('mousedown',e=>{dragging=true;e.preventDefault();});
+  track.addEventListener('click',e=>setVal(posToVal(e.clientX),true));
+  document.addEventListener('mousemove',e=>{if(dragging)setVal(posToVal(e.clientX),true);});
+  document.addEventListener('mouseup',()=>{dragging=false;});
+  thumb.addEventListener('touchstart',e=>{dragging=true;e.preventDefault();},{passive:false});
+  document.addEventListener('touchmove',e=>{if(dragging){e.preventDefault();setVal(posToVal(e.touches[0].clientX),true);}},{passive:false});
+  document.addEventListener('touchend',()=>{dragging=false;});
+  window.addEventListener('resize',()=>setVal(selectedWaterTemp,false));
+
+  setTimeout(()=>setVal(initVal,false),50);
+}
+
 function makeVSlider(trackId,thumbId,fillId,outId,arr,initVal,subArr,subOutId){
   const track=document.getElementById(trackId);
   const thumb=document.getElementById(thumbId);
@@ -371,6 +435,7 @@ function makeVSlider(trackId,thumbId,fillId,outId,arr,initVal,subArr,subOutId){
   const steps=arr.length-1;
   const totalH=ROW_H*arr.length;
   track.style.height=totalH+'px';
+  track.style.setProperty('--track-h',totalH+'px');
 
   function setVal(v,save){
     const val=Math.max(0,Math.min(steps,Math.round(v)));
@@ -379,6 +444,7 @@ function makeVSlider(trackId,thumbId,fillId,outId,arr,initVal,subArr,subOutId){
     const px=(val/steps)*usable;
     thumb.style.top=px+'px';
     fill.style.height=(px+thumbH/2)+'px';
+    thumb.style.borderColor=gradientColorAt(val/steps);
     out.textContent=arr[val];
     if(subOut&&subArr)subOut.textContent=subArr[val];
     if(save){
@@ -429,6 +495,7 @@ function initSliders(){
   }
   makeVSlider('month-track','month-thumb','month-fill','vm-out',MONTHS,selectedMonth,null,null);
   makeVSlider('time-track','time-thumb','time-fill','vt-out',TIME_LABELS,selectedTimeIdx,TIME_SUBS,'vt-sub');
+  makeHSlider('temp-track','temp-thumb','temp-fill','vw-out',20,90,selectedWaterTemp,'°F');
 }
 
 function render(){
@@ -451,7 +518,7 @@ function renderSliders(){
     <div class="slider-screen">
       <div class="v-section">
         <div class="v-group">
-          <div style="font-size:13px;font-style:italic;color:#c0d8e8;letter-spacing:.04em;margin-bottom:10px;text-align:center">Time of Year</div>
+          <div style="font-size:15px;color:#c0d8e8;letter-spacing:.04em;margin-bottom:10px;text-align:center">Time of Year</div>
           <div class="v-inner">
             <div class="v-track-wrap">
               <div class="v-track" id="month-track">
@@ -464,7 +531,7 @@ function renderSliders(){
           <div class="v-readout" id="vm-out">${MONTHS[selectedMonth]}</div>
         </div>
         <div class="v-group">
-          <div style="font-size:13px;font-style:italic;color:#c0d8e8;letter-spacing:.04em;margin-bottom:10px;text-align:center">Time of Day</div>
+          <div style="font-size:15px;color:#c0d8e8;letter-spacing:.04em;margin-bottom:10px;text-align:center">Time of Day</div>
           <div class="v-inner">
             <div class="v-track-wrap">
               <div class="v-track" id="time-track">
@@ -478,10 +545,15 @@ function renderSliders(){
           <div class="v-readout-sub" id="vt-sub">${TIME_SUBS[selectedTimeIdx]}</div>
         </div>
       </div>
-      <div style="text-align:center;margin-top:4px">
-        <div style="color:rgba(74,127,160,.35);font-size:9px;letter-spacing:.14em;text-transform:uppercase">
-          ${liveWeather?'Time auto-detected · drag to adjust':'Set your sliders · tap Next when ready'}
+      <div class="h-section">
+        <div class="h-readout">Approximate Water Temperature ~ <span id="vw-out">${selectedWaterTemp}°F</span></div>
+        <div class="h-track-wrap">
+          <div class="h-track" id="temp-track">
+            <div class="h-fill" id="temp-fill"></div>
+            <div class="h-thumb" id="temp-thumb"></div>
+          </div>
         </div>
+        <div class="h-bounds"><span>20°F</span><span>90°F</span></div>
       </div>
     </div>
   `;
