@@ -1,0 +1,617 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Bass for Dummies">
+<meta name="theme-color" content="#07111c">
+<link rel="manifest" href="./manifest.json">
+<title>Bass for Dummies</title>
+<style>
+  *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+  html,body{height:100%;overscroll-behavior:none}
+  body{
+    min-height:100vh;
+    background:#07111c;
+    font-family:'Palatino Linotype','Book Antiqua',Palatino,Georgia,serif;
+    color:#d4eaf5;
+    display:flex;
+    justify-content:center;
+    overflow-x:hidden;
+  }
+  body::before{
+    content:'';position:fixed;inset:0;pointer-events:none;z-index:0;
+    background:
+      radial-gradient(ellipse 80% 50% at 15% 85%,rgba(0,90,160,.10) 0%,transparent 60%),
+      radial-gradient(ellipse 60% 40% at 85% 15%,rgba(0,60,120,.07) 0%,transparent 55%);
+  }
+  #app{
+    position:relative;z-index:1;
+    width:100%;max-width:460px;
+    padding:20px 18px 60px;
+    transition:opacity .18s ease,transform .18s ease;
+  }
+  #app.fade-out{opacity:0;transform:translateY(8px)}
+
+  .hdr{text-align:center;padding:10px 0 18px}
+  .hdr-icon{font-size:28px;margin-bottom:5px}
+  .hdr-title{color:#c8a96e;font-size:18px;letter-spacing:.14em;text-transform:uppercase}
+  .hdr-sub{color:#4a7fa0;font-size:10px;letter-spacing:.22em;text-transform:uppercase;margin-top:3px}
+  .weather-pill{
+    display:inline-flex;align-items:center;gap:6px;
+    margin-top:10px;padding:4px 12px;
+    background:rgba(0,100,160,.15);
+    border:1px solid rgba(74,127,160,.25);
+    border-radius:20px;font-size:10px;color:#7ab0cc;
+  }
+  .weather-pill.offline{background:rgba(0,60,40,.25);border-color:rgba(60,140,80,.25);color:#5a9a6a}
+  .weather-pill.loading{color:rgba(100,150,180,.5)}
+  .live-dot{width:6px;height:6px;border-radius:50%;background:#5a9a6a;animation:pulse 1.8s ease-in-out infinite}
+  @keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
+
+  .next-btn{
+    position:fixed;top:20px;right:20px;z-index:100;
+    background:rgba(200,169,110,.15);
+    border:1px solid rgba(200,169,110,.4);
+    border-radius:8px;padding:7px 16px;
+    color:#c8a96e;font-size:12px;letter-spacing:.12em;text-transform:uppercase;
+    cursor:pointer;font-family:inherit;
+    transition:background .15s,border-color .15s;
+  }
+  .next-btn:active,.next-btn:hover{background:rgba(200,169,110,.28);border-color:rgba(200,169,110,.7)}
+  .next-btn.hidden{display:none}
+
+  .slider-screen{display:flex;flex-direction:column;align-items:center;gap:0}
+  .v-section{display:flex;flex-direction:row;gap:40px;justify-content:center;align-items:flex-start;margin-bottom:28px;touch-action:none}
+  .v-group{display:flex;flex-direction:column;align-items:center}
+  .v-inner{display:flex;flex-direction:row;gap:8px;align-items:stretch;margin-top:.5rem}
+  .v-labels{display:flex;flex-direction:column;justify-content:space-between;width:110px}
+  .v-label-item{display:flex;flex-direction:column;align-items:flex-start;justify-content:center}
+  .v-label-item .lbl{font-size:11px;color:rgba(180,210,230,.7);white-space:nowrap;line-height:1.2}
+  .v-label-item .sub{font-size:9px;color:rgba(120,160,190,.45);white-space:nowrap}
+  .v-track-wrap{display:flex;justify-content:center;align-items:stretch;width:20px}
+  .v-track{position:relative;width:4px;margin:0 auto;background:rgba(255,255,255,.07);border-radius:2px;cursor:pointer;user-select:none}
+  .v-fill{position:absolute;top:0;left:0;width:100%;background:linear-gradient(180deg,#2a6ea6,#c8a96e);border-radius:2px;pointer-events:none}
+  .v-thumb{position:absolute;left:50%;transform:translateX(-50%);width:20px;height:20px;border-radius:50%;background:#07111c;border:2px solid #c8a96e;cursor:grab;touch-action:none;z-index:2}
+  .v-thumb:active{cursor:grabbing}
+  .v-readout{margin-top:10px;text-align:center;color:#c8a96e;font-size:13px;font-style:italic;min-height:18px;width:120px}
+  .v-readout-sub{text-align:center;color:rgba(120,160,190,.55);font-size:10px;min-height:14px;width:120px}
+
+  .prog{margin-bottom:24px}
+  .prog-track{height:2px;background:rgba(255,255,255,.07);border-radius:2px;overflow:hidden}
+  .prog-fill{height:100%;background:linear-gradient(90deg,#2a6ea6,#c8a96e);border-radius:2px;transition:width .4s ease}
+  .prog-lbl{display:flex;justify-content:space-between;margin-top:5px;color:rgba(100,150,180,.45);font-size:9px;letter-spacing:.12em;text-transform:uppercase}
+
+  .step-title{color:#c0d8e8;font-size:15px;text-align:center;margin-bottom:18px;letter-spacing:.04em;font-style:italic}
+  .options{display:flex;flex-direction:column;gap:9px}
+  .opt{
+    background:rgba(255,255,255,.035);border:1px solid rgba(74,127,160,.15);
+    border-radius:10px;padding:13px 16px;cursor:pointer;text-align:left;
+    display:flex;justify-content:space-between;align-items:center;
+    transition:background .15s,border-color .15s;width:100%;
+  }
+  .opt:active,.opt:hover{background:rgba(42,110,166,.18);border-color:rgba(74,127,160,.45)}
+  .opt-lbl{color:#d8eaf5;font-size:14px}
+  .opt-sub{color:rgba(120,160,190,.65);font-size:11px;margin-top:2px}
+  .detected-badge{font-size:9px;color:#5a9a6a;letter-spacing:.1em;border:1px solid rgba(90,160,100,.35);border-radius:4px;padding:2px 6px;flex-shrink:0}
+  .back-btn{display:block;margin:16px auto 0;background:none;border:none;color:rgba(100,140,170,.45);font-size:11px;cursor:pointer;letter-spacing:.1em;font-family:inherit}
+
+  .summary{background:rgba(0,0,0,.35);border:1px solid rgba(74,127,160,.2);border-radius:12px;padding:13px 15px;margin-bottom:20px}
+  .sum-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:9px}
+  .sum-lbl{color:#4a7fa0;font-size:9px;letter-spacing:.16em;text-transform:uppercase}
+  .temp-pill{background:rgba(0,80,140,.3);border:1px solid rgba(74,127,160,.3);border-radius:20px;padding:3px 10px;display:flex;align-items:center;gap:5px;font-size:11px;color:#7ab0cc}
+  .temp-pill b{color:#87ceeb;font-size:12px}
+  .tags{display:flex;flex-wrap:wrap;gap:5px}
+  .tag{background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.07);border-radius:5px;padding:3px 8px;color:#96b8cc;font-size:11px}
+  .rank-hdr{color:#c8a96e;font-size:11px;letter-spacing:.18em;text-transform:uppercase;text-align:center;margin-bottom:13px}
+
+  .card{background:rgba(255,255,255,.03);border:1px solid rgba(74,127,160,.12);border-radius:12px;margin-bottom:10px;overflow:hidden;cursor:pointer;transition:background .2s,border-color .2s}
+  .card.open{background:rgba(20,35,50,.75)}
+  .card-top{padding:14px 15px;display:flex;align-items:center;gap:12px}
+  .swatch{width:36px;height:36px;border-radius:9px;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:17px}
+  .card-info{flex:1;min-width:0}
+  .card-name-row{display:flex;align-items:center;gap:7px;flex-wrap:wrap}
+  .rank-badge{font-size:10px;font-weight:bold;letter-spacing:.08em;border-radius:4px;padding:1px 6px}
+  .card-name{color:#daeaf5;font-size:14px;font-style:italic}
+  .card-meta{color:rgba(120,160,190,.6);font-size:10px;margin-top:3px}
+  .chev{color:rgba(100,140,170,.4);font-size:14px;transition:transform .25s ease;flex-shrink:0}
+  .chev.open{transform:rotate(180deg)}
+  .card-detail{padding:0 15px 15px;border-top:1px solid rgba(255,255,255,.05)}
+  .detail-inner{padding-top:12px;display:flex;flex-direction:column;gap:9px}
+  .dblock{background:rgba(0,0,0,.3);border-radius:8px;padding:10px 12px}
+  .dblock.lt{background:rgba(0,0,0,.18)}
+  .dhead{color:#4a7fa0;font-size:9px;letter-spacing:.15em;text-transform:uppercase;margin-bottom:5px}
+  .dtext{color:#c8dfe8;font-size:13px;line-height:1.62}
+  .drow{display:flex;gap:8px;align-items:center}
+  .drow-lbl{font-size:10px;color:rgba(100,140,160,.6)}
+  .drow-val{font-size:12px;color:#96b8cc}
+
+  .reset{display:block;width:100%;margin-top:16px;background:rgba(42,110,166,.08);border:1px solid rgba(42,110,166,.25);border-radius:10px;padding:13px;color:#6aadd0;font-size:12px;letter-spacing:.14em;text-transform:uppercase;cursor:pointer;transition:background .15s;font-family:inherit}
+  .reset:active,.reset:hover{background:rgba(42,110,166,.2)}
+  .footer{text-align:center;margin-top:28px;color:rgba(74,127,160,.28);font-size:9px;letter-spacing:.12em;text-transform:uppercase}
+</style>
+</head>
+<body>
+
+<button class="next-btn" id="next-btn" onclick="goToConditions()">Next →</button>
+
+<div id="app">
+  <div class="hdr">
+    <div class="hdr-icon">🎣</div>
+    <div class="hdr-title">Bass for Dummies</div>
+    <div class="hdr-sub">Largemouth Field Guide</div>
+    <div id="weather-pill" class="weather-pill offline"><span>⚓ Offline mode — manual inputs</span></div>
+  </div>
+  <div id="main"></div>
+  <div class="footer">Largemouth Bass · All Waters</div>
+</div>
+
+<script>
+const BAITS=[
+  {id:1,name:"Black & Blue Flipping Jig",weight:"3/4 oz",
+   color:"Black / Blue",swatch:["#111122","#3355cc"],type:"Flipping Jig",icon:"🎣",
+   score(c){let s=10;if(c.waterClarity==="stained")s+=3;if(c.recentWeather==="cold_front")s+=3;
+     if(["Pre-Dawn","Dawn","Early Morning"].includes(c.timeOfDay))s+=2;if(c.waterTemp<56)s+=2;if(c.sky==="sunny")s+=1;return s},
+   vTemp:[48,66],vWind:["calm","light","windy"],vTime:["Pre-Dawn","Dawn","Early Morning","Morning","Mid Morning","Late Morning","High Noon","Early Afternoon","Afternoon","Golden Hour","Dusk","Last Light"],
+   vSky:["sunny","cloudy","overcast"],vWeather:["warm_stretch","recent_rain","cold_front","stable"],vClarity:["clear","stained"],
+   where:"Creek arms — pitch tight to every stump & laydown, 3–10 ft",
+   how:"Flip or pitch to the base of each stump. Let it freefall on semi-slack line and watch for a line twitch. If nothing, give it 2–3 slow hops on the bottom then move on. Short deliberate hops with long pauses — never drag it."},
+  {id:2,name:"Green Pumpkin Texas Rig",weight:"3/4 oz tungsten • Brush Hog / Beaver",
+   color:"Green Pumpkin",swatch:["#3a4e1e","#7db535"],type:"Soft Plastic",icon:"🪱",
+   score(c){let s=9;if(c.waterClarity==="clear")s+=3;if(c.waterTemp>=54&&c.waterTemp<=62)s+=2;
+     if(["High Noon","Early Afternoon","Afternoon"].includes(c.timeOfDay))s+=1;if(c.recentWeather==="cold_front")s+=2;if(c.recentWeather==="stable")s+=1;return s},
+   vTemp:[50,68],vWind:["calm","light","windy"],vTime:["Pre-Dawn","Dawn","Early Morning","Morning","Mid Morning","Late Morning","High Noon","Early Afternoon","Afternoon","Golden Hour","Dusk","Last Light"],
+   vSky:["sunny","cloudy","overcast"],vWeather:["warm_stretch","recent_rain","cold_front","stable"],vClarity:["clear","stained"],
+   where:"Stump flats, laydowns, any heavy wood cover",
+   how:"Same flip-and-pitch approach as the jig. Drag it slowly across the bottom between stumps — slow crawl, then pause at every piece of cover. Most strikes come on the initial fall or the first inch of movement off the bottom."},
+  {id:3,name:"Lipless Crankbait",weight:"1/2 oz • Rat-L-Trap",
+   color:"Red Craw (cold) → Sexy Shad (warm)",swatch:["#8b2000","#ff6b35"],type:"Crankbait",icon:"⚡",
+   score(c){let s=7;if(c.waterTemp>=54)s+=2;if(c.recentWeather==="warm_stretch")s+=4;
+     if(c.recentWeather==="recent_rain")s+=2;if(["Morning","Mid Morning","Late Morning"].includes(c.timeOfDay))s+=2;
+     if(c.wind==="light")s+=1;if(c.sky!=="sunny")s+=1;return s},
+   vTemp:[52,68],vWind:["calm","light"],vTime:["Early Morning","Morning","Mid Morning","Late Morning","High Noon","Early Afternoon","Afternoon"],
+   vSky:["sunny","cloudy","overcast"],vWeather:["warm_stretch","recent_rain","stable"],vClarity:["clear","stained"],
+   where:"Shallow flats, creek arm mid-sections, main lake transition points",
+   how:"Rip-and-fall: reel a few turns to depth, rip the rod tip 1–2 ft upward and let it flutter on semi-slack line. Strikes almost always come on the fall. Vary rip speed until you find what triggers them."},
+  {id:4,name:"Chartreuse Spinnerbait",weight:"3/8–1/2 oz • Double Willow",
+   color:"Chartreuse / White",swatch:["#1d3d0a","#c8f000"],type:"Spinnerbait",icon:"✨",
+   score(c){let s=7;if(c.waterClarity==="stained")s+=4;if(["cloudy","overcast"].includes(c.sky))s+=2;
+     if(c.wind!=="calm")s+=2;if(c.recentWeather==="recent_rain")s+=3;if(c.waterTemp>=52)s+=1;return s},
+   vTemp:[50,65],vWind:["light","windy"],vTime:["Early Morning","Morning","Mid Morning","Late Morning","High Noon","Early Afternoon","Afternoon","Golden Hour"],
+   vSky:["cloudy","overcast"],vWeather:["warm_stretch","recent_rain","stable"],vClarity:["stained"],
+   where:"Stained water banks, parallel to banks, over submerged timber",
+   how:"Cast parallel to the bank and slow-roll just fast enough to keep blades spinning — skim just above the bottom or through tops of submerged brush. Let it deflect off stumps. That deflection is the strike trigger."},
+  {id:5,name:"Suspending Jerkbait",weight:"Megabass 110 / Strike King KVD",
+   color:"Ghost Minnow / Blue Chrome",swatch:["#1a3a5c","#87ceeb"],type:"Jerkbait",icon:"💧",
+   score(c){let s=6;if(c.waterTemp<56)s+=5;if(c.waterClarity==="clear")s+=3;
+     if(c.recentWeather==="cold_front")s+=4;if(["Pre-Dawn","Dawn","Early Morning","Golden Hour","Dusk"].includes(c.timeOfDay))s+=2;if(c.wind==="calm")s+=1;return s},
+   vTemp:[48,60],vWind:["calm","light"],vTime:["Pre-Dawn","Dawn","Early Morning","Morning","Golden Hour","Dusk"],
+   vSky:["sunny","cloudy"],vWeather:["stable","cold_front"],vClarity:["clear"],
+   where:"Main lake staging points, 8–15 ft depth",
+   how:"2–3 sharp twitches keeping slack out of the line, then PAUSE 3–5 full seconds. Repeat. The colder the water the longer the pause. Rod tip low and sideways for best darting action. After a cold front, pause even longer than feels comfortable."},
+  {id:6,name:"Paddle Tail Swimbait",weight:"3/8–1/2 oz weighted hook • Keitech / Zoom",
+   color:"White Pearl / Sexy Shad",swatch:["#1c3d6e","#b0d4f0"],type:"Swimbait",icon:"🐠",
+   score(c){let s=7;if(c.waterTemp>=55)s+=3;if(c.recentWeather==="warm_stretch")s+=2;
+     if(["Morning","Mid Morning","Late Morning","High Noon"].includes(c.timeOfDay))s+=2;if(c.waterClarity==="clear")s+=1;if(c.wind==="light")s+=1;return s},
+   vTemp:[52,68],vWind:["calm","light"],vTime:["Early Morning","Morning","Mid Morning","Late Morning","High Noon","Early Afternoon","Afternoon"],
+   vSky:["sunny","cloudy","overcast"],vWeather:["warm_stretch","stable","recent_rain"],vClarity:["clear","stained"],
+   where:"Secondary points, mid-arm sections, mouths of coves",
+   how:"Slow steady retrieve in the 4–10 ft zone. Rod at 10 o'clock, reel just fast enough for consistent tail kick. Occasionally kill the retrieve and let it flutter — strikes often hit on that pause. Work along stump lines and cove mouths."},
+  {id:7,name:"Wacky Senko",weight:'5" • No weight',
+   color:"Watermelon Red Flake",swatch:["#1e4d2b","#ff4455"],type:"Finesse",icon:"🪝",
+   score(c){let s=5;if(c.waterClarity==="clear")s+=4;if(c.sky==="sunny")s+=2;
+     if(c.wind==="calm")s+=3;if(["High Noon","Early Afternoon","Afternoon"].includes(c.timeOfDay))s+=1;if(c.recentWeather==="cold_front")s+=3;return s},
+   vTemp:[50,66],vWind:["calm"],vTime:["Mid Morning","Late Morning","High Noon","Early Afternoon","Afternoon"],
+   vSky:["sunny","cloudy"],vWeather:["stable","cold_front","warm_stretch"],vClarity:["clear"],
+   where:"Protected clear-water coves, visible stumps in calm pockets",
+   how:"Cast near a stump and let it sink completely on slack line — do almost nothing. Both ends wiggle naturally on the fall. Sit on the bottom 5–10 seconds, one tiny twitch, then let it settle again. This is a patience bait."},
+  {id:8,name:"ChatterBait / Bladed Jig",weight:"3/8–1/2 oz • White or Chartreuse trailer",
+   color:"White/Silver or Chartreuse/White",swatch:["#2e2e2e","#e0e0e0"],type:"Bladed Jig",icon:"🔆",
+   score(c){let s=6;if(c.waterClarity==="stained")s+=4;if(["cloudy","overcast"].includes(c.sky))s+=2;
+     if(c.wind!=="calm")s+=2;if(c.waterTemp>=54)s+=2;if(c.recentWeather==="recent_rain")s+=3;return s},
+   vTemp:[52,68],vWind:["light","windy"],vTime:["Early Morning","Morning","Mid Morning","Late Morning","High Noon","Early Afternoon","Afternoon"],
+   vSky:["cloudy","overcast"],vWeather:["warm_stretch","recent_rain","stable"],vClarity:["stained"],
+   where:"Stained water banks, timber lines, secondary points",
+   how:"Medium pace retrieve and let it deflect off any cover it touches — stumps, brush, timber. The deflection triggers the instinct bite. Can also slow-roll near the bottom in deeper staging areas. In stained water after rain this is your best search bait."},
+  {id:9,name:"Squarebill Crankbait",weight:"Strike King 1.5 or 2.5",
+   color:"Crawfish / Chartreuse Shad",swatch:["#7b3f00","#ff8c42"],type:"Crankbait",icon:"🪨",
+   score(c){let s=5;if(c.waterTemp>=56)s+=3;if(c.recentWeather==="warm_stretch")s+=2;
+     if(["Morning","Mid Morning","Late Morning"].includes(c.timeOfDay))s+=2;if(c.wind==="light")s+=1;return s},
+   vTemp:[54,68],vWind:["calm","light"],vTime:["Early Morning","Morning","Mid Morning","Late Morning","High Noon","Early Afternoon","Afternoon"],
+   vSky:["sunny","cloudy"],vWeather:["warm_stretch","stable"],vClarity:["clear","stained"],
+   where:"Shallow stump flats 2–6 ft, dam riprap, rocky mid-lake points",
+   how:"Cast past stumps and wood, reel at medium pace so it bangs off structure. When it deflects off something, pause briefly — that's the bite window. You want contact with cover on every cast. The chaos of the deflection is the whole point."},
+  {id:10,name:"Buzzbait",weight:"3/8 oz • White or Chartreuse",
+   color:"White / Chartreuse",swatch:["#0d2e0d","#00ff88"],type:"Topwater",icon:"💥",
+   score(c){let s=3;if(c.waterTemp>=58)s+=4;if(c.wind==="calm")s+=4;
+     if(["overcast","cloudy"].includes(c.sky))s+=2;if(["Pre-Dawn","Dawn","Early Morning","Golden Hour","Dusk","Last Light"].includes(c.timeOfDay))s+=3;
+     if(c.recentWeather==="warm_stretch")s+=3;return s},
+   vTemp:[56,68],vWind:["calm"],vTime:["Pre-Dawn","Dawn","Early Morning","Golden Hour","Dusk","Last Light"],
+   vSky:["cloudy","overcast"],vWeather:["warm_stretch","stable"],vClarity:["clear","stained"],
+   where:"Shallow stump flats, calm protected coves, upper creek arms",
+   how:"Cast as close to stumps and shoreline as possible. Start reeling the MOMENT it hits water — don't let it sink. Steady medium-fast retrieve, parallel to the bank. Strikes are violent — wait a half-second before setting the hook so you don't pull it away."}
+];
+
+const MONTHS=["January","February","March","April","May","June","July","August","September","October","November","December"];
+const TIME_LABELS=["Pre-Dawn","Dawn","Early Morning","Morning","Mid Morning","Late Morning","High Noon","Early Afternoon","Afternoon","Golden Hour","Dusk","Last Light"];
+const TIME_SUBS=["(5–6am)","(6–7am)","(7–8am)","(8–9am)","(9–10am)","(10am–12pm)","(12–2pm)","(2–4pm)","(4–6pm)","(6–7pm)","(7–8pm)","(8–9pm)"];
+const TIME_HOUR_START=[5,6,7,8,9,10,12,14,16,18,19,20];
+
+const STEPS=["sky","wind","recentWeather","waterClarity"];
+const OPTIONS={
+  sky:[
+    {value:"sunny",    label:"☀️ Sunny / Bright",  sub:"Clear skies, full sun"},
+    {value:"cloudy",   label:"⛅ Partly Cloudy",   sub:"Mix of sun and clouds"},
+    {value:"overcast", label:"☁️ Overcast / Gray", sub:"Fully clouded over"},
+  ],
+  wind:[
+    {value:"calm",  label:"🪷 Calm / Glassy",  sub:"Little to no wind, flat water"},
+    {value:"light", label:"🌬 Light Breeze",   sub:"Small ripples on the surface"},
+    {value:"windy", label:"💨 Windy / Choppy", sub:"Whitecaps or heavy chop"},
+  ],
+  recentWeather:[
+    {value:"warm_stretch", label:"☀️ Nice stretch",           sub:"Several warm, sunny days in a row"},
+    {value:"recent_rain",  label:"🌧️ Recent rainstorm",       sub:"Rain in the last day or two"},
+    {value:"cold_front",   label:"🥶 Cold front just passed", sub:"Was warm, now colder and windy"},
+    {value:"stable",       label:"➡️ Same ol' same ol'",      sub:"Nothing dramatic, weather's been consistent"},
+  ],
+  waterClarity:[
+    {value:"clear",   label:"👁 Clear Water",     sub:"Can see 2+ ft down"},
+    {value:"stained", label:"🟤 Stained / Murky", sub:"Brownish or off-color water"},
+  ],
+};
+const STEP_TITLES={
+  sky:"What are sky conditions?",
+  wind:"How's the wind?",
+  recentWeather:"What's the recent weather been?",
+  waterClarity:"How's the water clarity?",
+};
+const RANK_COLORS=["#d4a843","#9eacb8","#b87333"];
+const RANK_LABELS=["#1 Pick","#2 Pick","#3 Pick"];
+const RANK_BORDERS=["rgba(200,169,110,.35)","rgba(158,172,184,.35)","rgba(184,115,51,.35)"];
+
+let phase="sliders";
+let step=0, conds={}, expandedId=null;
+let liveWeather=null;
+let selectedMonth=new Date().getMonth();
+let selectedTimeIdx=0;
+const ROW_H=36;
+
+function windLabel(mph){return mph<5?"calm":mph<15?"light":"windy"}
+function skyLabel(pct){return pct<30?"sunny":pct<70?"cloudy":"overcast"}
+
+function estimateWaterTemp(airF,recentWeather){
+  let b=airF*0.65+12;
+  if(recentWeather==="warm_stretch")b+=2.5;
+  if(recentWeather==="cold_front")b-=3;
+  if(recentWeather==="recent_rain")b-=1;
+  return Math.round(Math.max(46,Math.min(70,b)));
+}
+
+function baselineAirTemp(recentWeather){
+  const monthTemps=[42,46,55,63,72,80,85,84,76,65,54,44];
+  let b=monthTemps[selectedMonth]||62;
+  if(recentWeather==="warm_stretch")return b+6;
+  if(recentWeather==="cold_front")return b-8;
+  if(recentWeather==="recent_rain")return b-2;
+  return b;
+}
+
+async function fetchWeather(){
+  const pill=document.getElementById('weather-pill');
+  try{
+    const res=await fetch("https://api.anthropic.com/v1/messages",{
+      method:"POST",
+      headers:{"Content-Type":"application/json"},
+      body:JSON.stringify({
+        model:"claude-sonnet-4-20250514",
+        max_tokens:300,
+        tools:[{type:"web_search_20250305",name:"web_search"}],
+        system:`You are a weather data extractor. Search for current weather then respond ONLY with raw JSON, no markdown, no backticks.
+Format: {"airTempF":<number>,"windMph":<number>,"cloudPct":<number>}
+cloudPct: 0=clear/sunny, 50=partly cloudy, 100=overcast.`,
+        messages:[{role:"user",content:"Current weather in Tulsa Oklahoma area. JSON only."}]
+      })
+    });
+    if(!res.ok)throw new Error('API error');
+    const data=await res.json();
+    const block=data.content?.find(b=>b.type==="text");
+    if(!block)throw new Error('no text');
+    const parsed=JSON.parse(block.text.replace(/```json|```/g,"").trim());
+    liveWeather={
+      airTempF:Math.round(parsed.airTempF),
+      windMph:Math.round(parsed.windMph),
+      cloudPct:Math.round(parsed.cloudPct??50),
+      windLabel:windLabel(parsed.windMph),
+      skyLabel:skyLabel(parsed.cloudPct??50),
+    };
+    pill.className="weather-pill";
+    pill.innerHTML=`<span class="live-dot"></span><span>${liveWeather.airTempF}°F &nbsp;·&nbsp; ${liveWeather.windMph} mph &nbsp;·&nbsp; Live</span>`;
+    const h=new Date().getHours();
+    let best=0;
+    for(let i=TIME_HOUR_START.length-1;i>=0;i--){
+      if(h>=TIME_HOUR_START[i]){best=i;break;}
+    }
+    selectedTimeIdx=best;
+    if(phase==="sliders") initSliders();
+  }catch(e){
+    liveWeather=null;
+    pill.className="weather-pill offline";
+    pill.innerHTML=`<span>⚓ Offline mode — manual inputs</span>`;
+  }
+}
+
+function getRecommendations(c,waterTemp){
+  const full={...c,waterTemp};
+  const eligible=BAITS.filter(b=>
+    waterTemp>=b.vTemp[0]&&waterTemp<=b.vTemp[1]&&
+    b.vTime.includes(c.timeOfDay)&&b.vSky.includes(c.sky)&&
+    b.vWind.includes(c.wind)&&b.vWeather.includes(c.recentWeather)&&
+    b.vClarity.includes(c.waterClarity)
+  );
+  const pool=eligible.length>=3?eligible:BAITS;
+  return pool.map(b=>({...b,fs:b.score(full)})).sort((a,b)=>b.fs-a.fs).slice(0,3);
+}
+
+function getLabel(f,v){return OPTIONS[f]?.find(o=>o.value===v)?.label||v}
+
+function transition(fn){
+  const app=document.getElementById('app');
+  app.classList.add('fade-out');
+  setTimeout(()=>{fn();render();app.classList.remove('fade-out')},180);
+}
+
+function makeVSlider(trackId,thumbId,fillId,outId,arr,initVal,subArr,subOutId){
+  const track=document.getElementById(trackId);
+  const thumb=document.getElementById(thumbId);
+  const fill=document.getElementById(fillId);
+  const out=document.getElementById(outId);
+  const subOut=subOutId?document.getElementById(subOutId):null;
+  const steps=arr.length-1;
+  const totalH=ROW_H*arr.length;
+  track.style.height=totalH+'px';
+
+  function setVal(v,save){
+    const val=Math.max(0,Math.min(steps,Math.round(v)));
+    const thumbH=20;
+    const usable=totalH-thumbH;
+    const px=(val/steps)*usable;
+    thumb.style.top=px+'px';
+    fill.style.height=(px+thumbH/2)+'px';
+    out.textContent=arr[val];
+    if(subOut&&subArr)subOut.textContent=subArr[val];
+    if(save){
+      if(trackId==='month-track')selectedMonth=val;
+      if(trackId==='time-track')selectedTimeIdx=val;
+    }
+  }
+
+  function posToVal(clientY){
+    const rect=track.getBoundingClientRect();
+    const usable=totalH-20;
+    const relY=clientY-rect.top-10;
+    return(Math.max(0,Math.min(usable,relY))/usable)*steps;
+  }
+
+  let dragging=false;
+  thumb.addEventListener('mousedown',e=>{dragging=true;e.preventDefault();});
+  track.addEventListener('click',e=>setVal(posToVal(e.clientY),true));
+  document.addEventListener('mousemove',e=>{if(dragging)setVal(posToVal(e.clientY),true);});
+  document.addEventListener('mouseup',()=>{dragging=false;});
+  thumb.addEventListener('touchstart',e=>{dragging=true;e.preventDefault();},{passive:false});
+  document.addEventListener('touchmove',e=>{if(dragging){e.preventDefault();setVal(posToVal(e.touches[0].clientY),true);}},{passive:false});
+  document.addEventListener('touchend',()=>{dragging=false;});
+
+  setTimeout(()=>setVal(initVal,false),50);
+}
+
+function initSliders(){
+  const mel=document.getElementById('month-labels');
+  if(mel&&!mel.hasChildNodes()){
+    MONTHS.forEach(m=>{
+      const row=document.createElement('div');
+      row.className='v-label-item';
+      row.style.height=ROW_H+'px';
+      row.innerHTML=`<span class="lbl">${m}</span>`;
+      mel.appendChild(row);
+    });
+  }
+  const tel=document.getElementById('time-labels');
+  if(tel&&!tel.hasChildNodes()){
+    TIME_LABELS.forEach((label,i)=>{
+      const row=document.createElement('div');
+      row.className='v-label-item';
+      row.style.height=ROW_H+'px';
+      row.innerHTML=`<span class="lbl">${label}</span><span class="sub">${TIME_SUBS[i]}</span>`;
+      tel.appendChild(row);
+    });
+  }
+  makeVSlider('month-track','month-thumb','month-fill','vm-out',MONTHS,selectedMonth,null,null);
+  makeVSlider('time-track','time-thumb','time-fill','vt-out',TIME_LABELS,selectedTimeIdx,TIME_SUBS,'vt-sub');
+}
+
+function render(){
+  const nextBtn=document.getElementById('next-btn');
+  if(phase==="sliders"){
+    nextBtn.classList.remove('hidden');
+    renderSliders();
+  } else if(phase==="conditions"){
+    nextBtn.classList.add('hidden');
+    renderConditions();
+  } else {
+    nextBtn.classList.add('hidden');
+    renderResults();
+  }
+}
+
+function renderSliders(){
+  const main=document.getElementById('main');
+  main.innerHTML=`
+    <div class="slider-screen">
+      <div class="v-section">
+        <div class="v-group">
+          <div style="font-size:13px;font-style:italic;color:#c0d8e8;letter-spacing:.04em;margin-bottom:10px;text-align:center">Time of Year</div>
+          <div class="v-inner">
+            <div class="v-track-wrap">
+              <div class="v-track" id="month-track">
+                <div class="v-fill" id="month-fill"></div>
+                <div class="v-thumb" id="month-thumb"></div>
+              </div>
+            </div>
+            <div class="v-labels" id="month-labels"></div>
+          </div>
+          <div class="v-readout" id="vm-out">${MONTHS[selectedMonth]}</div>
+        </div>
+        <div class="v-group">
+          <div style="font-size:13px;font-style:italic;color:#c0d8e8;letter-spacing:.04em;margin-bottom:10px;text-align:center">Time of Day</div>
+          <div class="v-inner">
+            <div class="v-track-wrap">
+              <div class="v-track" id="time-track">
+                <div class="v-fill" id="time-fill"></div>
+                <div class="v-thumb" id="time-thumb"></div>
+              </div>
+            </div>
+            <div class="v-labels" id="time-labels"></div>
+          </div>
+          <div class="v-readout" id="vt-out">${TIME_LABELS[selectedTimeIdx]}</div>
+          <div class="v-readout-sub" id="vt-sub">${TIME_SUBS[selectedTimeIdx]}</div>
+        </div>
+      </div>
+      <div style="text-align:center;margin-top:4px">
+        <div style="color:rgba(74,127,160,.35);font-size:9px;letter-spacing:.14em;text-transform:uppercase">
+          ${liveWeather?'Time auto-detected · drag to adjust':'Set your sliders · tap Next when ready'}
+        </div>
+      </div>
+    </div>
+  `;
+  initSliders();
+}
+
+function renderConditions(){
+  const main=document.getElementById('main');
+  const field=STEPS[step];
+  const opts=OPTIONS[field];
+  const pct=(step/STEPS.length*100).toFixed(1);
+  let html=`
+    <div class="prog">
+      <div class="prog-track"><div class="prog-fill" style="width:${pct}%"></div></div>
+      <div class="prog-lbl"><span>Conditions</span><span>${step+1} of ${STEPS.length}</span></div>
+    </div>
+    <div class="step-title">${STEP_TITLES[field]}</div>
+    <div class="options">
+  `;
+  opts.forEach(o=>{
+    const isDetected=liveWeather&&(
+      (field==="sky"&&liveWeather.skyLabel===o.value)||
+      (field==="wind"&&liveWeather.windLabel===o.value)
+    );
+    html+=`
+      <button class="opt" onclick="selectOpt('${field}','${o.value}')">
+        <div>
+          <div class="opt-lbl">${o.label}</div>
+          <div class="opt-sub">${o.sub}</div>
+        </div>
+        ${isDetected?'<span class="detected-badge">DETECTED</span>':''}
+      </button>
+    `;
+  });
+  html+=`</div>`;
+  if(step>0){
+    html+=`<button class="back-btn" onclick="goBackStep()">← Back</button>`;
+  } else {
+    html+=`<button class="back-btn" onclick="goBackToSliders()">← Back to sliders</button>`;
+  }
+  main.innerHTML=html;
+}
+
+function renderResults(){
+  const main=document.getElementById('main');
+  const airTemp=liveWeather?liveWeather.airTempF:baselineAirTemp(conds.recentWeather);
+  const sky=liveWeather?liveWeather.skyLabel:conds.sky;
+  const wind=liveWeather?liveWeather.windLabel:conds.wind;
+  const finalConds={...conds,sky,wind,timeOfDay:TIME_LABELS[selectedTimeIdx]};
+  const waterTemp=estimateWaterTemp(airTemp,conds.recentWeather);
+  const recs=getRecommendations(finalConds,waterTemp);
+  const liveStr=liveWeather?` <span style="color:#5a9a6a;font-size:10px">● Live</span>`:'';
+
+  let html=`
+    <div class="summary">
+      <div class="sum-top">
+        <span class="sum-lbl">Conditions Summary</span>
+        <div class="temp-pill">
+          <span>~${airTemp}°F air${liveStr}</span>
+          <span style="color:rgba(74,127,160,.4)">·</span>
+          <b>~${waterTemp}°F water</b>
+        </div>
+      </div>
+      <div class="tags">
+        <span class="tag">${MONTHS[selectedMonth]}</span>
+        <span class="tag">${TIME_LABELS[selectedTimeIdx]} ${TIME_SUBS[selectedTimeIdx]}</span>
+        ${STEPS.map(f=>`<span class="tag">${getLabel(f,conds[f])}</span>`).join('')}
+      </div>
+    </div>
+    <div class="rank-hdr">Top Recommendations</div>
+  `;
+
+  recs.forEach((b,i)=>{
+    const open=expandedId===b.id;
+    html+=`
+      <div class="card${open?' open':''}" style="border-color:${open?RANK_BORDERS[i]:'rgba(74,127,160,.12)'}"
+           onclick="toggleCard(${b.id})">
+        <div class="card-top">
+          <div class="swatch" style="background:linear-gradient(135deg,${b.swatch[0]},${b.swatch[1]});box-shadow:0 0 12px ${b.swatch[1]}33">
+            ${b.icon}
+          </div>
+          <div class="card-info">
+            <div class="card-name-row">
+              <span class="rank-badge" style="color:${RANK_COLORS[i]};border:1px solid ${RANK_COLORS[i]}55">${RANK_LABELS[i]}</span>
+              <span class="card-name">${b.name}</span>
+            </div>
+            <div class="card-meta">${b.type} &nbsp;·&nbsp; <span style="color:${b.swatch[1]}">${b.color}</span></div>
+          </div>
+          <div class="chev${open?' open':''}">▾</div>
+        </div>
+        ${open?`
+        <div class="card-detail">
+          <div class="detail-inner">
+            <div class="dblock"><div class="dhead">📍 Where</div><div class="dtext">${b.where}</div></div>
+            <div class="dblock"><div class="dhead">🎯 How to Fish It</div><div class="dtext">${b.how}</div></div>
+            <div class="dblock lt"><div class="drow"><span class="drow-lbl">Weight / Size:</span><span class="drow-val">${b.weight}</span></div></div>
+          </div>
+        </div>`:''}
+      </div>
+    `;
+  });
+
+  html+=`<button class="reset" onclick="resetApp()">↩ New Conditions</button>`;
+  main.innerHTML=html;
+}
+
+function goToConditions(){transition(()=>{phase="conditions";step=0;})}
+function goBackToSliders(){transition(()=>{phase="sliders";})}
+function selectOpt(field,value){
+  conds={...conds,[field]:value};
+  if(step<STEPS.length-1){transition(()=>step++);}
+  else{transition(()=>phase="results");}
+}
+function goBackStep(){transition(()=>step--)}
+function toggleCard(id){expandedId=expandedId===id?null:id;render()}
+function resetApp(){transition(()=>{phase="sliders";step=0;conds={};expandedId=null;})}
+
+if('serviceWorker' in navigator){
+  window.addEventListener('load',()=>{
+    navigator.serviceWorker.register('./sw.js')
+      .then(()=>console.log('SW registered'))
+      .catch(e=>console.warn('SW failed:',e));
+  });
+}
+
+const nowH=new Date().getHours();
+for(let i=TIME_HOUR_START.length-1;i>=0;i--){
+  if(nowH>=TIME_HOUR_START[i]){selectedTimeIdx=i;break;}
+}
+render();
+fetchWeather();
+</script>
+</body></html>
