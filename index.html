@@ -28,14 +28,14 @@
   }
   #scale-wrap{
     position:fixed;inset:0;
-    display:flex;align-items:center;justify-content:center;
+    display:flex;align-items:flex-start;justify-content:center;
     overflow:hidden;z-index:1;
   }
   #app{
     position:relative;
     width:390px;flex-shrink:0;
     padding:20px 18px 20px;
-    transform-origin:center center;
+    transform-origin:center top;
     transition:opacity .18s ease;
   }
   #app.fade-out{opacity:0}
@@ -144,6 +144,78 @@
 
   .reset{display:block;width:100%;margin-top:16px;background:rgba(42,110,166,.08);border:1px solid rgba(42,110,166,.25);border-radius:10px;padding:13px;color:#6aadd0;font-size:12px;letter-spacing:.14em;text-transform:uppercase;cursor:pointer;transition:background .15s;font-family:inherit}
   .reset:active,.reset:hover{background:rgba(42,110,166,.2)}
+
+  .lake-screen{padding-top:8px}
+  .region{margin-bottom:10px}
+  .region-hdr{
+    width:100%;display:flex;align-items:center;justify-content:space-between;
+    background:rgba(255,255,255,.025);border:1px solid rgba(74,127,160,.18);
+    border-radius:10px;padding:12px 16px;cursor:pointer;font-family:inherit;
+    transition:background .15s,border-color .15s;
+  }
+  .region-hdr:hover,.region-hdr:active{background:rgba(42,110,166,.12);border-color:rgba(74,127,160,.32)}
+  .region-name{color:#c8a96e;font-size:12px;letter-spacing:.16em;text-transform:uppercase}
+  .region-count{color:rgba(120,160,190,.55);font-size:10px;letter-spacing:.1em;margin-left:auto;margin-right:10px}
+  .region-body{display:none;padding:8px 0 4px;flex-direction:column;gap:7px}
+  .region.open .region-body{display:flex}
+  .lake-opt{
+    background:rgba(255,255,255,.035);border:1px solid rgba(74,127,160,.15);
+    border-radius:10px;padding:12px 14px;cursor:pointer;text-align:left;
+    display:flex;justify-content:space-between;align-items:center;
+    transition:background .15s,border-color .15s;width:100%;font-family:inherit;
+  }
+  .lake-opt:hover,.lake-opt:active{background:rgba(42,110,166,.18);border-color:rgba(74,127,160,.45)}
+  .lake-opt.selected{background:rgba(200,169,110,.10);border-color:rgba(200,169,110,.55)}
+  .lake-info{display:flex;flex-direction:column;gap:3px;min-width:0}
+  .lake-name{color:#daeaf5;font-size:14px}
+  .lake-meta{color:rgba(120,160,190,.6);font-size:10px;letter-spacing:.04em}
+  .lmb-pill{
+    flex-shrink:0;display:inline-flex;align-items:center;gap:4px;
+    background:rgba(0,80,140,.25);border:1px solid rgba(74,127,160,.3);
+    border-radius:14px;padding:3px 10px;font-size:10px;color:#7ab0cc;
+    letter-spacing:.06em;
+  }
+  .lmb-pill b{color:#c8a96e;font-weight:700;font-size:11px}
+
+  .lake-profile{display:flex;flex-direction:column;gap:7px;margin-top:8px;padding:0 2px 2px}
+  .lake-actions{display:flex;gap:8px;align-items:stretch;margin-top:8px}
+  .lake-back-btn{
+    flex-shrink:0;width:48px;
+    background:rgba(74,127,160,.12);
+    border:1px solid rgba(74,127,160,.35);
+    border-radius:10px;
+    color:#7ab0cc;font-size:20px;cursor:pointer;
+    font-family:inherit;
+    display:flex;align-items:center;justify-content:center;
+    transition:background .15s,border-color .15s;
+  }
+  .lake-back-btn:hover,.lake-back-btn:active{background:rgba(74,127,160,.25);border-color:rgba(74,127,160,.6)}
+  .fish-btn{
+    flex:1;background:rgba(200,169,110,.13);
+    border:1px solid rgba(200,169,110,.5);
+    border-radius:10px;padding:13px;
+    color:#c8a96e;font-size:12px;letter-spacing:.16em;text-transform:uppercase;
+    cursor:pointer;font-family:inherit;
+    transition:background .15s,border-color .15s;
+  }
+  .fish-btn:hover,.fish-btn:active{background:rgba(200,169,110,.28);border-color:rgba(200,169,110,.75)}
+  .lake-card-static{
+    background:rgba(200,169,110,.10);border:1px solid rgba(200,169,110,.55);
+    border-radius:10px;padding:12px 14px;
+    display:flex;justify-content:space-between;align-items:center;
+  }
+
+  .back-btn-top{
+    position:absolute;top:12px;left:12px;z-index:100;
+    background:rgba(74,127,160,.12);
+    border:1px solid rgba(74,127,160,.35);
+    border-radius:8px;padding:7px 16px;
+    color:#7ab0cc;font-size:12px;letter-spacing:.12em;text-transform:uppercase;
+    cursor:pointer;font-family:inherit;
+    transition:background .15s,border-color .15s;
+  }
+  .back-btn-top:hover,.back-btn-top:active{background:rgba(74,127,160,.25);border-color:rgba(74,127,160,.6)}
+  .back-btn-top.hidden{display:none}
 </style>
 </head>
 <body>
@@ -151,6 +223,7 @@
 <div id="scale-wrap">
 <div id="app">
   <button class="next-btn" id="next-btn" onclick="goToConditions()">Next →</button>
+  <button class="back-btn-top hidden" id="back-btn-top" onclick="goBackToLakes()">← Back</button>
   <div class="hdr">
     <div class="hdr-icon">🎣</div>
     <div class="hdr-sub">Largemouth Field Guide</div>
@@ -284,9 +357,48 @@ const RANK_COLORS=["#d4a843","#9eacb8","#b87333"];
 const RANK_LABELS=["#1 Pick","#2 Pick","#3 Pick"];
 const RANK_BORDERS=["rgba(200,169,110,.35)","rgba(158,172,184,.35)","rgba(184,115,51,.35)"];
 
-let phase="sliders";
+const LAKES=[
+  {id:"grand",name:"Grand Lake",lat:36.5,lng:-95.0,clarity:"Stained Water",lmb:10,
+   avgDepth:"35ft",fishDepth:"2–15ft",
+   structure:["Brush Piles","Docks","Riprap at Bridges","Rocky Points","Creek Mouths"],
+   bestSeasons:["Spring","Fall","Consistent Year-Round"],
+   notable:["Drowning Creek","Duck Creek","Below Pensacola Dam"],
+   baitNotes:"Stained water — spinnerbait, ChatterBait, and crankbaits score higher. Jigs on docks. Reaction baits produce."},
+  {id:"tenkiller",name:"Lake Tenkiller",lat:35.6,lng:-95.0,clarity:"Clear Water",lmb:8,
+   avgDepth:"50ft",fishDepth:"1–15ft",
+   structure:["Rocky Bluffs","Pea Gravel Points","Docks","Brush Piles","Creek Channels"],
+   bestSeasons:["Spring Spawn","Summer Nights","Fall Topwater"],
+   notable:["Oak Cove","Strayhorn Landing"],
+   baitNotes:"Natural colors score higher. Jerkbait is elite. Finesse scores higher. Spinnerbait/ChatterBait only after rain."},
+  {id:"fortgibson",name:"Fort Gibson Lake",lat:35.9,lng:-95.2,clarity:"Variable Clarity",lmb:7,
+   avgDepth:"25ft",fishDepth:"2–12ft",
+   structure:["Standing Timber","Brush","Riprap","Docks","Creek Channels"],
+   bestSeasons:["Spring","Early Fall"],
+   notable:["Fort Gibson WMA","Sequoyah State Park Shorelines"],
+   baitNotes:"Heavy timber lake — flipping jig and Texas rig score very high. Spinnerbait through timber."},
+  {id:"oologah",name:"Oologah Lake",lat:36.4,lng:-95.7,clarity:"Stained Water",lmb:7,
+   avgDepth:"22ft",fishDepth:"2–10ft",
+   structure:["Standing Timber","Creek Channels","Flats","Weed Beds","Sandbars"],
+   bestSeasons:["Spring","Early Summer","Fall Topwater"],
+   notable:["Red Bud Bay","Timber Creek Arms","River Channel Edges"],
+   baitNotes:"Stained — spinnerbait, ChatterBait, lipless score higher. Buzzbait on flats at dawn/dusk. Finesse scores lower."},
+  {id:"skiatook",name:"Skiatook Lake",lat:36.4,lng:-96.1,clarity:"Stained Water",lmb:6,
+   avgDepth:"28ft",fishDepth:"2–12ft",
+   structure:["Standing Timber","Brush","Creek Channels","River Channel","Riprap"],
+   bestSeasons:["Spring","Fall"],
+   notable:["Below The Dam","River Channel Timber"],
+   baitNotes:"Consistently stained — spinnerbait, ChatterBait, flipping jig score higher. Squarebill along timber. Finesse scores lower."},
+];
+const REGIONS=[
+  {id:"eastern",name:"Eastern Oklahoma",lakeIds:["grand","tenkiller","fortgibson"]},
+  {id:"tulsa",name:"Tulsa Area",lakeIds:["oologah","skiatook"]},
+];
+
+let phase="lakes";
 let step=0, conds={}, expandedId=null;
 let liveWeather=null;
+let selectedLakeId=null;
+let expandedRegion=null;
 let selectedMonth=new Date().getMonth();
 let selectedTimeIdx=0;
 let selectedWaterTemp=60;
@@ -312,47 +424,86 @@ function baselineAirTemp(recentWeather){
   return b;
 }
 
-async function fetchWeather(){
+function pad2(n){return String(n).padStart(2,'0')}
+function detectRecentWeather(daily,cur){
+  const precips=daily.precipitation_sum||[];
+  const maxes=daily.temperature_2m_max||[];
+  const n=precips.length;
+  // Rain in the last ~48h is the loudest signal — fishermen notice
+  const recentRain=(precips[n-1]||0)+(precips[n-2]||0);
+  if(recentRain>=0.25)return 'recent_rain';
+  // Cold front: today's max significantly cooler than yesterday's + windy now
+  if(maxes.length>=2){
+    const drop=maxes[maxes.length-2]-maxes[maxes.length-1];
+    if(drop>=7 && (cur.wind_speed_10m||0)>=10)return 'cold_front';
+  }
+  // Warm stretch: 3 consecutive 70°F+ highs and currently sunny
+  if(maxes.length>=3 && maxes.every(m=>m>=70) && (cur.cloud_cover??50)<40)return 'warm_stretch';
+  return 'stable';
+}
+function formatLivePillText(airTempF){
+  const d=new Date();
+  const date=`${pad2(d.getMonth()+1)}/${pad2(d.getDate())}/${String(d.getFullYear()).slice(-2)}`;
+  let h=d.getHours();const ampm=h>=12?'PM':'AM';h=h%12||12;
+  const m=pad2(d.getMinutes());
+  return `📍 ${date} · ${h}:${m} ${ampm} · ${airTempF}°F`;
+}
+function setOfflinePill(){
   const pill=document.getElementById('weather-pill');
+  if(!pill)return;
+  liveWeather=null;
+  pill.className="weather-pill offline";
+  pill.innerHTML='<span>⚓ Offline mode — manual inputs</span>';
+}
+function setLivePill(){
+  const pill=document.getElementById('weather-pill');
+  if(!pill||!liveWeather)return;
+  pill.className="weather-pill";
+  pill.innerHTML=`<span class="live-dot"></span><span>${formatLivePillText(liveWeather.airTempF)}</span>`;
+}
+
+async function fetchWeather(lat,lng){
+  const pill=document.getElementById('weather-pill');
+  if(!pill)return;
+  if(lat==null||lng==null){
+    if(!navigator.geolocation){setOfflinePill();return;}
+    try{
+      const pos=await new Promise((resolve,reject)=>{
+        navigator.geolocation.getCurrentPosition(resolve,reject,{timeout:6000,maximumAge:60000});
+      });
+      lat=pos.coords.latitude;
+      lng=pos.coords.longitude;
+    }catch(e){setOfflinePill();return;}
+  }
   try{
-    const res=await fetch("https://api.anthropic.com/v1/messages",{
-      method:"POST",
-      headers:{"Content-Type":"application/json"},
-      body:JSON.stringify({
-        model:"claude-sonnet-4-20250514",
-        max_tokens:300,
-        tools:[{type:"web_search_20250305",name:"web_search"}],
-        system:`You are a weather data extractor. Search for current weather then respond ONLY with raw JSON, no markdown, no backticks.
-Format: {"airTempF":<number>,"windMph":<number>,"cloudPct":<number>}
-cloudPct: 0=clear/sunny, 50=partly cloudy, 100=overcast.`,
-        messages:[{role:"user",content:"Current weather in Tulsa Oklahoma area. JSON only."}]
-      })
-    });
-    if(!res.ok)throw new Error('API error');
-    const data=await res.json();
-    const block=data.content?.find(b=>b.type==="text");
-    if(!block)throw new Error('no text');
-    const parsed=JSON.parse(block.text.replace(/```json|```/g,"").trim());
+    const forecastUrl=`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lng}&current=temperature_2m,wind_speed_10m,cloud_cover&temperature_unit=fahrenheit&wind_speed_unit=mph`;
+    const today=new Date();
+    const fmt=d=>d.toISOString().slice(0,10);
+    const start=new Date(today);start.setDate(today.getDate()-2);
+    const archiveUrl=`https://archive-api.open-meteo.com/v1/archive?latitude=${lat}&longitude=${lng}&start_date=${fmt(start)}&end_date=${fmt(today)}&daily=temperature_2m_max,precipitation_sum&temperature_unit=fahrenheit&precipitation_unit=inch`;
+    const [fRes,aRes]=await Promise.all([fetch(forecastUrl),fetch(archiveUrl)]);
+    if(!fRes.ok)throw new Error('forecast api');
+    const fData=await fRes.json();
+    const aData=aRes.ok?await aRes.json():{daily:{}};
+    const cur=fData.current||{};
     liveWeather={
-      airTempF:Math.round(parsed.airTempF),
-      windMph:Math.round(parsed.windMph),
-      cloudPct:Math.round(parsed.cloudPct??50),
-      windLabel:windLabel(parsed.windMph),
-      skyLabel:skyLabel(parsed.cloudPct??50),
+      airTempF:Math.round(cur.temperature_2m),
+      windMph:Math.round(cur.wind_speed_10m),
+      cloudPct:Math.round(cur.cloud_cover??50),
+      windLabel:windLabel(cur.wind_speed_10m),
+      skyLabel:skyLabel(cur.cloud_cover??50),
+      recentLabel:detectRecentWeather(aData.daily||{},cur),
     };
-    pill.className="weather-pill";
-    pill.innerHTML=`<span class="live-dot"></span><span>${liveWeather.airTempF}°F &nbsp;·&nbsp; ${liveWeather.windMph} mph &nbsp;·&nbsp; Live</span>`;
+    setLivePill();
+    selectedWaterTemp=estimateWaterTemp(liveWeather.airTempF,conds.recentWeather);
     const h=new Date().getHours();
-    let best=0;
     for(let i=TIME_HOUR_START.length-1;i>=0;i--){
-      if(h>=TIME_HOUR_START[i]){best=i;break;}
+      if(h>=TIME_HOUR_START[i]){selectedTimeIdx=i;break;}
     }
-    selectedTimeIdx=best;
-    if(phase==="sliders") initSliders();
+    if(phase==="sliders")initSliders();
   }catch(e){
-    liveWeather=null;
-    pill.className="weather-pill offline";
-    pill.innerHTML=`<span>⚓ Offline mode — manual inputs</span>`;
+    setOfflinePill();
+    return;
   }
 }
 
@@ -515,17 +666,141 @@ function applyScale(){
 
 function render(){
   const nextBtn=document.getElementById('next-btn');
-  if(phase==="sliders"){
+  const backBtn=document.getElementById('back-btn-top');
+  backBtn.classList.add('hidden');
+  if(phase==="lakes"){
+    nextBtn.textContent='Skip →';
+    nextBtn.onclick=skipLakes;
     nextBtn.classList.remove('hidden');
+    renderLakes();
+  } else if(phase==="sliders"){
+    nextBtn.textContent='Next →';
+    nextBtn.onclick=goToConditions;
+    nextBtn.classList.remove('hidden');
+    backBtn.classList.remove('hidden');
+    backBtn.onclick=goBackToLakes;
     renderSliders();
   } else if(phase==="conditions"){
     nextBtn.classList.add('hidden');
+    backBtn.classList.remove('hidden');
+    backBtn.onclick=step>0?goBackStep:goBackToSliders;
     renderConditions();
   } else {
     nextBtn.classList.add('hidden');
     renderResults();
   }
   requestAnimationFrame(applyScale);
+}
+
+function renderLakes(){
+  const main=document.getElementById('main');
+  // Solo view: a lake is selected — show only its card + profile
+  if(selectedLakeId){
+    const lake=LAKES.find(l=>l.id===selectedLakeId);
+    if(lake){
+      main.innerHTML=`<div class="lake-screen">
+        <div class="lake-card-static">
+          <div class="lake-info">
+            <div class="lake-name">${lake.name}</div>
+            <div class="lake-meta">${lake.clarity} · Avg ${lake.avgDepth}</div>
+          </div>
+          <div class="lmb-pill">LMB <b>${lake.lmb}</b>/10</div>
+        </div>
+        ${renderLakeProfile(lake)}
+      </div>`;
+      return;
+    }
+  }
+  // Menu view: no lake selected — show region list
+  const html=REGIONS.map(r=>{
+    const isOpen=r.id===expandedRegion;
+    const allLakes=r.lakeIds.map(id=>LAKES.find(l=>l.id===id)).filter(Boolean);
+    const lakeHtml=allLakes.map(l=>`
+      <button class="lake-opt" onclick="selectLake('${l.id}')">
+        <div class="lake-info">
+          <div class="lake-name">${l.name}</div>
+          <div class="lake-meta">${l.clarity} · Avg ${l.avgDepth}</div>
+        </div>
+        <div class="lmb-pill">LMB <b>${l.lmb}</b>/10</div>
+      </button>`).join("");
+    return `
+      <div class="region${isOpen?' open':''}" data-id="${r.id}">
+        <button class="region-hdr" onclick="toggleRegion('${r.id}')">
+          <span class="region-name">${r.name}</span>
+          <span class="region-count">${allLakes.length} lake${allLakes.length===1?'':'s'}</span>
+          <span class="chev${isOpen?' open':''}">▼</span>
+        </button>
+        <div class="region-body">${lakeHtml}</div>
+      </div>`;
+  }).join("");
+  main.innerHTML=`<div class="lake-screen">${html}</div>`;
+}
+
+function renderLakeProfile(l){
+  return `
+    <div class="lake-profile">
+      <div class="dblock"><div class="dhead">Primary Structure</div><div class="dtext">${l.structure.join(', ')}</div></div>
+      <div class="dblock lt"><div class="dhead">Depth</div><div class="dtext">Avg ${l.avgDepth} · Fish Hold ${l.fishDepth}</div></div>
+      <div class="dblock"><div class="dhead">Best Seasons</div><div class="dtext">${l.bestSeasons.join(', ')}</div></div>
+      <div class="dblock lt"><div class="dhead">Notable Areas</div><div class="dtext">${l.notable.join(', ')}</div></div>
+      <div class="lake-actions">
+        <button class="lake-back-btn" onclick="resetLakeMenu()" aria-label="Back">←</button>
+        <button class="fish-btn" onclick="fishThisLake()">Fish This Lake →</button>
+      </div>
+    </div>`;
+}
+
+function resetLakeMenu(){
+  selectedLakeId=null;
+  expandedRegion=null;
+  setOfflinePill();
+  renderLakes();
+  requestAnimationFrame(applyScale);
+}
+
+function toggleRegion(id){
+  if(expandedRegion===id){
+    expandedRegion=null;
+    selectedLakeId=null;
+  } else {
+    expandedRegion=id;
+    selectedLakeId=null;
+  }
+  setOfflinePill();
+  renderLakes();
+  requestAnimationFrame(applyScale);
+}
+
+function selectLake(id){
+  selectedLakeId=selectedLakeId===id?null:id;
+  renderLakes();
+  requestAnimationFrame(applyScale);
+  if(selectedLakeId){
+    const lake=LAKES.find(l=>l.id===selectedLakeId);
+    if(lake)fetchWeather(lake.lat,lake.lng);
+  } else {
+    setOfflinePill();
+  }
+}
+
+function skipLakes(){
+  selectedLakeId=null;
+  phase="sliders";
+  render();
+  fetchWeather();
+}
+
+function fishThisLake(){
+  phase="sliders";
+  render();
+  const lake=LAKES.find(l=>l.id===selectedLakeId);
+  if(lake)fetchWeather(lake.lat,lake.lng);
+  else fetchWeather();
+}
+
+function goBackToLakes(){
+  phase="lakes";
+  render();
 }
 
 window.addEventListener('resize',applyScale);
@@ -594,7 +869,8 @@ function renderConditions(){
   opts.forEach(o=>{
     const isDetected=liveWeather&&(
       (field==="sky"&&liveWeather.skyLabel===o.value)||
-      (field==="wind"&&liveWeather.windLabel===o.value)
+      (field==="wind"&&liveWeather.windLabel===o.value)||
+      (field==="recentWeather"&&liveWeather.recentLabel===o.value)
     );
     html+=`
       <button class="opt" onclick="selectOpt('${field}','${o.value}')">
@@ -607,11 +883,6 @@ function renderConditions(){
     `;
   });
   html+=`</div>`;
-  if(step>0){
-    html+=`<button class="back-btn" onclick="goBackStep()">← Back</button>`;
-  } else {
-    html+=`<button class="back-btn" onclick="goBackToSliders()">← Back to sliders</button>`;
-  }
   main.innerHTML=html;
 }
 
@@ -675,6 +946,7 @@ function renderResults(){
   });
 
   html+=`<button class="reset" onclick="resetApp()">↩ New Conditions</button>`;
+  html+=`<button class="reset" onclick="newLake()">⌖ New Lake</button>`;
   main.innerHTML=html;
 }
 
@@ -687,7 +959,13 @@ function selectOpt(field,value){
 }
 function goBackStep(){transition(()=>step--)}
 function toggleCard(id){expandedId=expandedId===id?null:id;render()}
-function resetApp(){transition(()=>{phase="sliders";step=0;conds={};expandedId=null;})}
+function resetApp(){
+  transition(()=>{phase="sliders";step=0;conds={};expandedId=null;});
+  const lake=LAKES.find(l=>l.id===selectedLakeId);
+  if(lake)fetchWeather(lake.lat,lake.lng);
+  else fetchWeather();
+}
+function newLake(){transition(()=>{phase="lakes";step=0;conds={};expandedId=null;selectedLakeId=null;expandedRegion=null;})}
 
 if('serviceWorker' in navigator){
   window.addEventListener('load',()=>{
@@ -702,6 +980,5 @@ for(let i=TIME_HOUR_START.length-1;i>=0;i--){
   if(nowH>=TIME_HOUR_START[i]){selectedTimeIdx=i;break;}
 }
 render();
-fetchWeather();
 </script>
 </body></html>
