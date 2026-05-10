@@ -89,6 +89,29 @@
   .h-bounds{display:flex;justify-content:space-between;margin-top:14px;font-size:11px;color:rgba(120,160,190,.55)}
   .h-readout{margin-bottom:14px;text-align:center;color:#c8a96e;font-size:15px;min-height:18px}
 
+  @media (max-height:900px){
+    #app{padding:6px 18px 6px}
+    .hdr{padding:8px 0 4px}
+    .hdr-icon{font-size:22px;margin-bottom:2px}
+    .hdr-sub{font-size:15px}
+    .weather-pill{margin-top:6px;padding:5px 14px;font-size:12px}
+    .v-section{margin-top:10px;margin-bottom:4px}
+    .h-section{margin-top:4px;margin-bottom:12px}
+    .h-readout{margin-bottom:6px;font-size:14px}
+    .h-bounds{margin-top:6px}
+    .h-track-wrap{padding:6px 0}
+  }
+  @media (max-height:750px){
+    .hdr-sub{font-size:13px;letter-spacing:.18em}
+    .weather-pill{font-size:11px;padding:4px 12px}
+    .v-label-item .lbl{font-size:11px;line-height:1.05}
+    .v-label-item .sub{font-size:9px;line-height:1.05}
+    .v-readout{font-size:13px}
+    .v-readout-sub{font-size:10px}
+    .h-readout{font-size:13px}
+    .h-bounds{font-size:10px}
+  }
+
   .prog{margin-bottom:24px}
   .prog-track{height:2px;background:rgba(255,255,255,.07);border-radius:2px;overflow:hidden}
   .prog-fill{height:100%;background:linear-gradient(90deg,#2a6ea6,#c8a96e);border-radius:2px;transition:width .4s ease}
@@ -285,7 +308,7 @@ let liveWeather=null;
 let selectedMonth=new Date().getMonth();
 let selectedTimeIdx=0;
 let selectedWaterTemp=60;
-const ROW_H=36;
+const ROW_H=Math.round(Math.max(22,Math.min(36,(window.innerHeight-470)/12)));
 
 function windLabel(mph){return mph<5?"calm":mph<15?"light":"windy"}
 function skyLabel(pct){return pct<30?"sunny":pct<70?"cloudy":"overcast"}
