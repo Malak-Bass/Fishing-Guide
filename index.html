@@ -15,13 +15,10 @@
   *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
   html,body{height:100%;overscroll-behavior:none}
   body{
-    min-height:100vh;
     background:#07111c;
     font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
     color:#d4eaf5;
-    display:flex;
-    justify-content:center;
-    overflow-x:hidden;
+    overflow:hidden;
   }
   body::before{
     content:'';position:fixed;inset:0;pointer-events:none;z-index:0;
@@ -29,13 +26,19 @@
       radial-gradient(ellipse 80% 50% at 15% 85%,rgba(0,90,160,.10) 0%,transparent 60%),
       radial-gradient(ellipse 60% 40% at 85% 15%,rgba(0,60,120,.07) 0%,transparent 55%);
   }
-  #app{
-    position:relative;z-index:1;
-    width:100%;max-width:460px;
-    padding:20px 18px 60px;
-    transition:opacity .18s ease,transform .18s ease;
+  #scale-wrap{
+    position:fixed;inset:0;
+    display:flex;align-items:center;justify-content:center;
+    overflow:hidden;z-index:1;
   }
-  #app.fade-out{opacity:0;transform:translateY(8px)}
+  #app{
+    position:relative;
+    width:390px;flex-shrink:0;
+    padding:20px 18px 20px;
+    transform-origin:center center;
+    transition:opacity .18s ease;
+  }
+  #app.fade-out{opacity:0}
 
   .hdr{text-align:center;padding:50px 0 18px}
   .hdr-icon{font-size:28px;margin-bottom:5px}
@@ -53,7 +56,7 @@
   @keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
 
   .next-btn{
-    position:fixed;top:20px;right:20px;z-index:100;
+    position:absolute;top:12px;right:12px;z-index:100;
     background:rgba(200,169,110,.15);
     border:1px solid rgba(200,169,110,.4);
     border-radius:8px;padding:7px 16px;
@@ -89,28 +92,6 @@
   .h-bounds{display:flex;justify-content:space-between;margin-top:14px;font-size:11px;color:rgba(120,160,190,.55)}
   .h-readout{margin-bottom:14px;text-align:center;color:#c8a96e;font-size:15px;min-height:18px}
 
-  @media (max-height:900px){
-    #app{padding:6px 18px 6px}
-    .hdr{padding:8px 0 4px}
-    .hdr-icon{font-size:22px;margin-bottom:2px}
-    .hdr-sub{font-size:15px}
-    .weather-pill{margin-top:6px;padding:5px 14px;font-size:12px}
-    .v-section{margin-top:10px;margin-bottom:4px}
-    .h-section{margin-top:4px;margin-bottom:12px}
-    .h-readout{margin-bottom:6px;font-size:14px}
-    .h-bounds{margin-top:6px}
-    .h-track-wrap{padding:6px 0}
-  }
-  @media (max-height:750px){
-    .hdr-sub{font-size:13px;letter-spacing:.18em}
-    .weather-pill{font-size:11px;padding:4px 12px}
-    .v-label-item .lbl{font-size:11px;line-height:1.05}
-    .v-label-item .sub{font-size:9px;line-height:1.05}
-    .v-readout{font-size:13px}
-    .v-readout-sub{font-size:10px}
-    .h-readout{font-size:13px}
-    .h-bounds{font-size:10px}
-  }
 
   .prog{margin-bottom:24px}
   .prog-track{height:2px;background:rgba(255,255,255,.07);border-radius:2px;overflow:hidden}
@@ -167,15 +148,16 @@
 </head>
 <body>
 
-<button class="next-btn" id="next-btn" onclick="goToConditions()">Next →</button>
-
+<div id="scale-wrap">
 <div id="app">
+  <button class="next-btn" id="next-btn" onclick="goToConditions()">Next →</button>
   <div class="hdr">
     <div class="hdr-icon">🎣</div>
     <div class="hdr-sub">Largemouth Field Guide</div>
     <div id="weather-pill" class="weather-pill offline"><span>⚓ Offline mode — manual inputs</span></div>
   </div>
   <div id="main"></div>
+</div>
 </div>
 
 <script>
@@ -308,7 +290,7 @@ let liveWeather=null;
 let selectedMonth=new Date().getMonth();
 let selectedTimeIdx=0;
 let selectedWaterTemp=60;
-const ROW_H=Math.round(Math.max(22,Math.min(36,(window.innerHeight-470)/12)));
+const ROW_H=36;
 
 function windLabel(mph){return mph<5?"calm":mph<15?"light":"windy"}
 function skyLabel(pct){return pct<30?"sunny":pct<70?"cloudy":"overcast"}
@@ -521,6 +503,16 @@ function initSliders(){
   makeHSlider('temp-track','temp-thumb','temp-fill','vw-out',20,90,selectedWaterTemp,'°F');
 }
 
+function applyScale(){
+  const app=document.getElementById('app');
+  if(!app)return;
+  app.style.transform='none';
+  const naturalW=app.offsetWidth||390;
+  const naturalH=app.offsetHeight||844;
+  const scale=Math.min(window.innerWidth/naturalW,window.innerHeight/naturalH);
+  app.style.transform=`scale(${scale})`;
+}
+
 function render(){
   const nextBtn=document.getElementById('next-btn');
   if(phase==="sliders"){
@@ -533,7 +525,10 @@ function render(){
     nextBtn.classList.add('hidden');
     renderResults();
   }
+  requestAnimationFrame(applyScale);
 }
+
+window.addEventListener('resize',applyScale);
 
 function renderSliders(){
   const main=document.getElementById('main');
