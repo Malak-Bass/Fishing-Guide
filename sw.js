@@ -1,4 +1,4 @@
-const CACHE = 'mcgee-bass-v2';
+const CACHE = 'mcgee-bass-v3';
 const ASSETS = [
   './',
   './index.html',
